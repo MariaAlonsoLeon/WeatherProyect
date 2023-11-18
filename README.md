@@ -9,7 +9,7 @@
 
 The WeatherApp provides weather information for a location on each of the Canary Islands. It fetches data from the OpenWeatherMap API (an online service providing meteorological data) and stores the information locally in an SQLite database.
 
-The application, when running, updates and inserts data from the API every 6 hours. After this update, it offers the possibility to check the weather forecast for several days, specifically 5 days after the current date. If the application already has a history, you can also check the recorded data from past days.
+The application, when running, updates and inserts data from the API every 6 hours. After this update, it offers the possibility to check the weather forecast for only one day, specifically it is allowed for 5 days after the current date. If the application already has a history, you can also check the recorded data from past days.
 
 ## Resources Used
 - **Development Environment:** IntelliJ IDEA.
