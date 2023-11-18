@@ -2,6 +2,7 @@ package org.ulpgc.dacd.control;
 
 import org.ulpgc.dacd.model.Location;
 import org.ulpgc.dacd.model.Weather;
+
 import java.io.IOException;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
@@ -21,15 +22,26 @@ public class WeatherController {
     private final int days;
     private final WeatherSupplier weatherSupplier;
     private final WeatherStore weatherStore;
+    private boolean firstTime = true;
+    private final Scanner scanner;
 
     public WeatherController(int days, WeatherSupplier weatherSupplier, WeatherStore weatherStore) {
         this.days = days;
         this.weatherSupplier = weatherSupplier;
         this.weatherStore = weatherStore;
         this.locations = loadLocations();
+        this.scanner = new Scanner(System.in);
     }
 
     public void execute() throws IOException {
+        if (firstTime) {
+            updateWeatherData();
+            firstTime = false;
+        }
+        showWeatherForUserInput();
+    }
+
+    private void updateWeatherData() {
         Instant currentTime = Instant.now();
         List<Instant> forecastTimes = calculateForecastTimes(currentTime, days);
         for (Location location : locations) {
@@ -40,18 +52,13 @@ public class WeatherController {
             }
         }
         logger.info("Weather data update completed.");
-        showWeatherForUserInput();
     }
 
     public void showWeatherForUserInput() {
-        Scanner scanner = new Scanner(System.in);
-        do {
-            processUserInput(scanner);
-        } while (shouldRepeatOperation(scanner));
-        scanner.close();
+        processUserInput();
     }
 
-    private void processUserInput(Scanner scanner) {
+    private void processUserInput() {
         try {
             System.out.print("Enter the name of the island: ");
             String userInputLocationName = scanner.nextLine();
@@ -99,12 +106,6 @@ public class WeatherController {
         return locations.stream()
                 .filter(location -> location.getName().equalsIgnoreCase(name))
                 .findFirst();
-    }
-
-    private boolean shouldRepeatOperation(Scanner scanner) {
-        System.out.print("Do you want to make another query? (Yes/No) ");
-        String userResponse = scanner.nextLine();
-        return userResponse.equalsIgnoreCase("Yes");
     }
 
     private void processLocation(Location location, List<Instant> forecastTimes) {
