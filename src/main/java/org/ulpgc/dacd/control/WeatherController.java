@@ -4,6 +4,7 @@ import org.ulpgc.dacd.model.Location;
 import org.ulpgc.dacd.model.Weather;
 import java.io.IOException;
 import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,24 +46,27 @@ public class WeatherController {
     public void showWeatherForUserInput() {
         Scanner scanner = new Scanner(System.in);
         do {
-            try {
-                System.out.print("Enter the name of the island: ");
-                String userInputLocationName = scanner.nextLine();
-                System.out.print("Enter the date in 'yyyy-MM-dd' format (for example, 2023-10-30): ");
-                String userInputDateString = scanner.nextLine();
-                Instant userInputDate = Instant.parse(userInputDateString + "T12:00:00Z");
-                findAndDisplayWeather(userInputLocationName, userInputDate);
-            } catch (Exception e) {
-                logger.log(Level.WARNING, "Error in user input: " + e.getMessage(), e);
-            }
+            processUserInput(scanner);
+
         } while (shouldRepeatOperation(scanner));
         scanner.close();
     }
 
-    private boolean shouldRepeatOperation(Scanner scanner) {
-        System.out.print("Do you want to make another query? (Yes/No) ");
-        String userResponse = scanner.nextLine();
-        return userResponse.equalsIgnoreCase("Yes");
+    private void processUserInput(Scanner scanner) {
+        try {
+            System.out.print("Enter the name of the island: ");
+            String userInputLocationName = scanner.nextLine();
+            System.out.print("Enter the date in 'yyyy-MM-dd' format (for example, 2023-10-30): ");
+            String userInputDateString = scanner.nextLine();
+            Instant userInputDate = parseUserInputDate(userInputDateString);
+            findAndDisplayWeather(userInputLocationName, userInputDate);
+        } catch (Exception e) {
+            System.out.println("Incorrect Data.");
+        }
+    }
+
+    private Instant parseUserInputDate(String userInputDateString) throws DateTimeParseException {
+        return Instant.parse(userInputDateString + "T12:00:00Z");
     }
 
     private void findAndDisplayWeather(String userInputLocationName, Instant userInputDate) {
@@ -73,7 +77,7 @@ public class WeatherController {
                             () -> System.out.println("No location found for the provided name: " + userInputLocationName)
                     );
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Error finding location: " + e.getMessage(), e);
+            System.out.println("Error finding location: " + e.getMessage());
         }
     }
 
@@ -88,7 +92,7 @@ public class WeatherController {
                             () -> System.out.println("No weather data found for " + userLocation.getName() + " on " + userInputDate)
                     );
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Error loading weather data:  " + e.getMessage(), e);
+            System.out.println("Error loading weather data: " + e.getMessage());
         }
     }
 
@@ -96,6 +100,12 @@ public class WeatherController {
         return locations.stream()
                 .filter(location -> location.getName().equalsIgnoreCase(name))
                 .findFirst();
+    }
+
+    private boolean shouldRepeatOperation(Scanner scanner) {
+        System.out.print("Do you want to make another query? (Yes/No) ");
+        String userResponse = scanner.nextLine();
+        return userResponse.equalsIgnoreCase("Yes");
     }
 
     private void processLocation(Location location, List<Instant> forecastTimes) {
