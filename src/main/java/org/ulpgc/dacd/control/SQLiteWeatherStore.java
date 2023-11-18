@@ -2,7 +2,6 @@ package org.ulpgc.dacd.control;
 
 import org.ulpgc.dacd.model.Location;
 import org.ulpgc.dacd.model.Weather;
-
 import java.sql.*;
 import java.time.Instant;
 import java.util.List;
@@ -12,7 +11,6 @@ import java.util.logging.Logger;
 
 public class SQLiteWeatherStore implements WeatherStore {
     private static final Logger logger = Logger.getLogger(SQLiteWeatherStore.class.getName());
-
     private final String databaseURL;
 
     public SQLiteWeatherStore(String databaseURL) {
@@ -24,7 +22,6 @@ public class SQLiteWeatherStore implements WeatherStore {
         if (weatherList.isEmpty()) {
             return;
         }
-
         try (Connection connection = DriverManager.getConnection(databaseURL)) {
             Location location = weatherList.get(0).getLocation();
             String tableName = buildTableName(location);
@@ -49,7 +46,7 @@ public class SQLiteWeatherStore implements WeatherStore {
     }
 
     private String buildTableName(Location location) {
-        return location.getIsland().replace(" ", "_");
+        return location.getName().replace(" ", "_");
     }
 
     private String buildSelectDataSQL(String tableName) {
@@ -60,7 +57,6 @@ public class SQLiteWeatherStore implements WeatherStore {
         try (PreparedStatement preparedStatement = connection.prepareStatement(selectDataSQL)) {
             preparedStatement.setObject(1, instant);
             ResultSet resultSet = preparedStatement.executeQuery();
-
             if (resultSet.next()) {
                 return Optional.of(mapResultSetToWeather(resultSet, location));
             }
@@ -110,7 +106,6 @@ public class SQLiteWeatherStore implements WeatherStore {
         int clouds = resultSet.getInt("cloud");
         float windSpeed = resultSet.getFloat("wind_speed");
         Instant instant = Instant.parse(resultSet.getString("date"));
-
         return new Weather(temperature, humidity, clouds, windSpeed, rainfall, location, instant);
     }
 

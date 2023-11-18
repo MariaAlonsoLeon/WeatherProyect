@@ -7,7 +7,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-
 import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
@@ -20,7 +19,6 @@ public class OpenWeatherMapSupplier implements WeatherSupplier {
     private final String templateUrl;
     private final String apiKey;
     private static final Logger logger = Logger.getLogger(OpenWeatherMapSupplier.class.getName());
-
     private static final String TEMPERATURE_KEY = "temp";
     private static final String HUMIDITY_KEY = "humidity";
     private static final String CLOUDS_KEY = "all";

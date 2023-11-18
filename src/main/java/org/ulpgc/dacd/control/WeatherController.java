@@ -31,7 +31,6 @@ public class WeatherController {
     public void execute() throws IOException {
         Instant currentTime = Instant.now();
         List<Instant> forecastTimes = calculateForecastTimes(currentTime, days);
-
         for (Location location : locations) {
             try {
                 processLocation(location, forecastTimes);
@@ -39,13 +38,11 @@ public class WeatherController {
                 logger.log(Level.SEVERE, "Error processing location: " + e.getMessage(), e);
             }
         }
-
         logger.info("Weather data update completed.");
-
         showWeatherForUserInput();
     }
 
-    private void showWeatherForUserInput() {
+    public void showWeatherForUserInput() {
         Scanner scanner = new Scanner(System.in);
         do {
             try {
@@ -85,10 +82,10 @@ public class WeatherController {
             weatherStore.loadWeather(userLocation, userInputDate)
                     .ifPresentOrElse(
                             userWeatherData -> {
-                                System.out.println("Weather data for " + userLocation.getIsland() + " on " + userWeatherData.getTs() + ":");
-                                System.out.println(userWeatherData.toString());
+                                System.out.println("Weather data for " + userLocation.getName() + " on " + userWeatherData.getTs() + ":");
+                                System.out.println(userWeatherData);
                             },
-                            () -> System.out.println("No weather data found for " + userLocation.getIsland() + " on " + userInputDate)
+                            () -> System.out.println("No weather data found for " + userLocation.getName() + " on " + userInputDate)
                     );
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error loading weather data:  " + e.getMessage(), e);
@@ -97,7 +94,7 @@ public class WeatherController {
 
     private Optional<Location> findLocationByName(String name) {
         return locations.stream()
-                .filter(location -> location.getIsland().equalsIgnoreCase(name))
+                .filter(location -> location.getName().equalsIgnoreCase(name))
                 .findFirst();
     }
 
@@ -108,7 +105,7 @@ public class WeatherController {
                 weatherStore.save(weathers);
             }
         } catch (IOException e) {
-            logger.log(Level.SEVERE, "Error getting weather for location " + location.getIsland(), e);
+            logger.log(Level.SEVERE, "Error getting weather for location " + location.getName(), e);
         }
     }
 

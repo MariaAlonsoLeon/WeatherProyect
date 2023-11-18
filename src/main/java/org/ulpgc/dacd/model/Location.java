@@ -2,18 +2,18 @@ package org.ulpgc.dacd.model;
 
 public class Location {
 
-    private final String island;
+    private final String name;
     private final double lat;
     private final double lon;
 
-    public Location(String island, double lat, double lon) {
-        this.island = island;
+    public Location(String name, double lat, double lon) {
+        this.name = name;
         this.lat = lat;
         this.lon = lon;
     }
 
-    public String getIsland() {
-        return island;
+    public String getName() {
+        return name;
     }
 
     public double getLat() {
@@ -26,6 +26,6 @@ public class Location {
 
     @Override
     public String toString() {
-        return getIsland() + "(" + getLat() + ", " + getLon() + ")";
+        return getName() + "(" + getLat() + ", " + getLon() + ")";
     }
 }
