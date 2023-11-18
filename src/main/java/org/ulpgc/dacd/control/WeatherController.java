@@ -54,11 +54,7 @@ public class WeatherController {
         logger.info("Weather data update completed.");
     }
 
-    public void showWeatherForUserInput() {
-        processUserInput();
-    }
-
-    private void processUserInput() {
+    private void showWeatherForUserInput() {
         try {
             System.out.print("Enter the name of the island: ");
             String userInputLocationName = scanner.nextLine();
