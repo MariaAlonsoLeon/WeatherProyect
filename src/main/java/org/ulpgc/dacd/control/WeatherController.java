@@ -47,7 +47,6 @@ public class WeatherController {
         Scanner scanner = new Scanner(System.in);
         do {
             processUserInput(scanner);
-
         } while (shouldRepeatOperation(scanner));
         scanner.close();
     }
