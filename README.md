@@ -74,7 +74,7 @@ The decision to use a logger to record information, warnings, and errors provide
 
 For a better understanding of the project and its structure, it has been decided to add a class diagram. It is important to note that only the main attributes and methods of each class have been included to make it more readable.
 
-![PruebaUML1 (3)](https://github.com/MariaAlonsoLeon/Practice1/assets/145381435/8eda6e19-1fe7-47ba-bca0-0826f2d05d28)
+![PruebaUML1 (5)](https://github.com/MariaAlonsoLeon/Practice1/assets/145381435/8eda6e19-1fe7-47ba-bca0-0826f2d05d28)
 
 ### Dependency Relationships
 
