@@ -81,6 +81,7 @@ For a better understanding of the project and its structure, it has been decided
 - The `WeatherController` class depends on the `WeatherSupplier` and `WeatherStore` classes to obtain and store meteorological data.
 - The `OpenWeatherMapSupplier` class implements the `WeatherSupplier` interface and uses the Jsoup library to obtain data from OpenWeatherMap.
 - The `SQLiteWeatherStore` class implements the `WeatherStore` interface.
-- The `WeatherTask` class depends on WeatherController to execute the logic of obtaining meteorological data according to a set schedule, thus coordinating the scheduled task with the main logic of the application.
+- The `WeatherTask` class depends on `WeatherController` to execute the logic of obtaining meteorological data according to a set schedule, thus coordinating the scheduled task with the main logic of the application.
 - The `Main` class depends on `WeatherController` to start and coordinate the application flow, and on `WeatherTask` to perform the periodic task.
-- The `Weather` class has an attribute of the Location class to indicate the location.
+- The `Weather` class has an attribute of the `Location` class to indicate the location.
+
