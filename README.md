@@ -1,85 +1,86 @@
 # WeatherApp
-- **Asignatura:** Desarrollo de Aplicaciones para Ciencia de Datos (DACD)
-- **Curso:** 2023-2024
-- **Titulación:** Ciencia e Ingeniería de Datos (GCID)
-- **Escuela:** Escuela de Ingeniería Informática (EII)
-- **Universidad:** Universidad de las Palmas de Gran Canaria (ULPGC)
+- **Subject:** Development of Applications for Data Science (DACD)
+- **Curse:** 2023-2024
+- **Degree:** Data Science and Engineering (GCID)
+- **School:** School of Computer Engineering (EII)
+- **University:**  University of Las Palmas de Gran Canaria (ULPGC)
 
-## Resumen de la Funcionalidad
-La aplicación WeatherApp proporciona información meteorológica para una ubicación en cada una de las Islas Canarias. Obtiene los datos de la API de OpenWeatherMap (servicio en línea que proporciona datos meteorologicos) y almacena la información localmente en una base de datos SQLite.
+## Functionality Summary
 
-La aplicación en ejecución cada 6 horas actualiza e inserta los datos de la última llamada de la API. Una vez hecha esta actualización ofrece la posibilidad de consultar el pronóstico del tiempo para varios días, concretamente 5 días posteriores a la fecha actual y en caso de que la aplicación ya tenga historial se podrán consultar los datos ya registrados de días pasados.
+The WeatherApp provides weather information for a location on each of the Canary Islands. It fetches data from the OpenWeatherMap API (an online service providing meteorological data) and stores the information locally in an SQLite database.
 
-## Recursos Utilizados
-- **Entorno de Desarrollo:** IntelliJ IDEA.
-- **Herramientas de Control de Versiones:** Git, GitHub
+The application, when running, updates and inserts data from the API every 6 hours. After this update, it offers the possibility to check the weather forecast for several days, specifically 5 days after the current date. If the application already has a history, you can also check the recorded data from past days.
 
-## Estructura del Proyecto y Dependencias
+## Resources Used
+- **Development Environment:** IntelliJ IDEA.
+- **Version Control Tools:** Git, GitHub
 
-El proyecto sigue una estructura organizada con varios paquetes que separan las responsabilidades y facilitan la mantenibilidad del código. A continuación, se describe la estructura de paquetes del proyecto:
+## Project Structure
 
-- `org.ulpgc.dacd.control`: Contiene las clases e interfaces relacionadas con el control de la aplicación:
-    - **Clases:**
-        - Main: La clase principal que inicia la aplicación. Configura y conecta los componentes principales.
-        - WeatherController: Encargada de coordinar la lógica principal de la aplicación, como la actualización de datos meteorológicos y la interacción con el usuario.
-        - OpenWeatherMapSupplier: Obtiene datos meteorológicos en tiempo real de OpenWeatherMap.
-        - SQLiteWeatherStore: Gestiona el almacenamiento local de datos meteorológicos en una base de datos SQLite.
-        - WeatherTask: Es una tarea programada que ejecuta la lógica de obtención de datos meteorológicos según un horario establecido.
+The project follows an organized structure with various packages that separate responsibilities and facilitate code maintainability. The project's package structure is described below:
+
+- `org.ulpgc.dacd.control`: Contains classes and interfaces related to application control:
+    - **Classes:**
+        - Main: The main class that starts the application. It configures and connects the main components.
+        - WeatherController: Responsible for coordinating the main logic of the application, such as updating meteorological data and interacting with the user.
+        - OpenWeatherMapSupplier: Retrieves real-time meteorological data from OpenWeatherMap.
+        - SQLiteWeatherStore: Manages local storage of meteorological data in an SQLite database.
+        - WeatherTask: A scheduled task that executes the logic of obtaining meteorological data according to a set schedule.
     - **Interfaces:**
-        - WeatherStore: Define métodos para almacenar y recuperar datos meteorológicos.
-        - WeatherSupplier: Define métodos para obtener datos meteorológicos de una fuente externa.
+        - WeatherStore: Defines methods for storing and retrieving meteorological data.
+        - WeatherSupplier: Defines methods for obtaining meteorological data from an external source.
 
-- `org.ulpgc.dacd.model`: Define las clases de modelo utilizadas para representar la información meteorológica:
-    - **Clases:**
-        - Location: Representa la información de la ubicación, incluyendo el nombre de la isla y sus coordenadas geográficas.
-        - Weather: Contiene los datos meteorológicos para una ubicación específica, como temperatura, humedad y descripción del tiempo.
+- `org.ulpgc.dacd.model`: Defines the model classes used to represent meteorological information:
+    - **Classes:**
+        - Location: Represents location information, including the name of the island and its geographical coordinates.
+        - Weather:  Contains meteorological data for a specific location, such as temperature, humidity, and weather description.
 
-- `jdbc`: Directorio que almacena la base de datos SQLite y su conexión.
+- `jdbc`: Directory that stores the SQLite database and its connection.
 
-## Diseño
+## Design
 
-### Patrones y Principios de Diseño
+### Design Patterns and Principles
 
+The application uses the Model-View-Controller (MVC) design pattern to achieve a modular and maintainable structure, taking into account principles such as modularity, cohesion, and low coupling. The separation of responsibilities facilitates extensibility and promotes a more robust and maintainable design over time.
 
-La aplicación utiliza el patrón de diseño MVC (Modelo-Vista-Controlador) para lograr una estructura modular y mantenible, teniendo en cuenta principios como la modularidad, cohesión y bajo acoplamiento. La separación de responsabilidades facilita la extensibilidad y promueve un diseño más sólido y mantenible a lo largo del tiempo.
+## Implementation Decisions
 
-## Decisiones de Implementación
+### Exception Handling
+Proper exception handling is implemented in various parts of the code, ensuring that errors are logged and handled correctly. This contributes to the system's robustness and facilitates the identification of potential issues.
 
-### Manejo de Excepciones
-Se implementa un manejo adecuado de excepciones en varias partes del código, asegurando que los errores se registren y gestionen correctamente. Esto contribuye a la robustez del sistema y facilita la identificación de posibles problemas.
+### Secure Data Extraction
+The use of the Jsoup library to extract HTML data from OpenWeatherMap is done safely and controlled, minimizing potential security threats.
 
-### Extracción de Datos Segura
-El uso de la biblioteca Jsoup para extraer datos HTML de OpenWeatherMap se realiza de manera segura y controlada, minimizando posibles amenazas de seguridad.
+### Use of Try-with-Resources
+In the handling of resources, such as JDBC connections, the try-with-resources statement is used, ensuring proper resource release and increasing code reliability.
 
-### Utilización de Try-with-Resources
-En el manejo de recursos, como conexiones JDBC, se emplea la declaración try-with-resources, garantizando la liberación adecuada de recursos y aumentando la fiabilidad del código.
+### Use of float vs double
 
-### Uso de float vs double
+Due to the higher precision of double but larger space occupation, it is only used for latitude and longitude, as the rest of the data provided by the API does not have many decimal places.
 
-Debido a que double presenta una mayor presición pero ocupa más espacio unicamente se utilizó para la latitud y la longitud, ya que el resto de datos proporcionados por la API no presentan muchos decimales.
+### Use of Final Variables
 
-### Uso de Variables Finales
+Most variables are marked as final to ensure immutability and prevent unexpected changes in the state of objects. This choice contributes to the consistency and predictability of the code, promoting security and maintenance throughout the application's lifecycle.
 
-La mayoría de variables se han marcado como final para garantizar inmutabilidad y prevenir cambios inesperados en el estado de los objetos. Esta elección contribuye a la consistencia y predictibilidad del código, promoviendo la seguridad y mantenimiento a lo largo del ciclo de vida de la aplicación.
+### API Key Management as an Argument
 
-### Gestión de API Key como Argumento
+The API Key is passed as an argument when running the application in IntelliJ IDEA to improve security and flexibility. It avoids the direct exposure of keys in the source code and facilitates configuration in different environments without modifying the code.
 
-La API Key se pasa como argumento al ejecutar la aplicación en IntelliJ IDEA para mejorar la seguridad y flexibilidad. Evita la exposición directa de claves en el código fuente y facilita la configuración en diferentes entornos sin modificar el código.
+### Use of Logger
 
-### Uso de Logger
+The decision to use a logger to record information, warnings, and errors provides efficient traceability of the application's execution, facilitating the identification and resolution of potential issues.
 
-Se ha optado por utilizar el logger para registrar información, advertencias y errores, esto da una trazabilidad eficiente de la ejecución de la aplicación y facilitando la identificación y resolución de posibles problemas.
-### Diagrama de Clases
+## Class Diagram
 
-Para un mejor entendimiento del proyecto y su estructura, se ha decidido añadir un diagrama de clases. Es importante destacar que solo se han incluido los atributos y métodos principales de cada clase con el fin de que sea más legible.
+For a better understanding of the project and its structure, it has been decided to add a class diagram. It is important to note that only the main attributes and methods of each class have been included to make it more readable.
 
-![Diagrama de Clases](..%2F..%2FPruebaUML1%20%283%29.png)
+![PruebaUML1 (3)](https://github.com/MariaAlonsoLeon/Practice1/assets/145381435/8eda6e19-1fe7-47ba-bca0-0826f2d05d28)
 
-## Relaciones de Dependencia
+### Dependency Relationships
 
-- La clase `WeatherController` depende de las clases `WeatherSupplier` y `WeatherStore` para obtener y almacenar datos meteorológicos.
-- La clase `OpenWeatherMapSupplier` implementa la interfaz `WeatherSupplier` y utiliza la biblioteca Jsoup para obtener datos de OpenWeatherMap.
-- La clase `SQLiteWeatherStore` implementa la interfaz `WeatherStore`.
-- La clase WeatherTask depende de WeatherController para ejecutar la lógica de obtención de datos meteorológicos según un horario establecido, coordinando así la tarea programada con la lógica principal de la aplicación.
-- La clase `Main` depende de `WeatherController` para iniciar y coordinar el flujo de la aplicación, y de `WeatherTask` para realizar la tarea periódica.
-- La clase `Weather` tiene un atributo de la clase `Location` para indicar la ubicación.
+- The `WeatherController` class depends on the `WeatherSupplier` and `WeatherStore` classes to obtain and store meteorological data.
+- The `OpenWeatherMapSupplier` class implements the `WeatherSupplier` interface and uses the Jsoup library to obtain data from OpenWeatherMap.
+- The `SQLiteWeatherStore` class implements the `WeatherStore` interface.
+- The `WeatherTask` class depends on WeatherController to execute the logic of obtaining meteorological data according to a set schedule, thus coordinating the scheduled task with the main logic of the application.
+- The `Main` class depends on `WeatherController` to start and coordinate the application flow, and on `WeatherTask` to perform the periodic task.
+- The `Weather` class has an attribute of the Location class to indicate the location.
