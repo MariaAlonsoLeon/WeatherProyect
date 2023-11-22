@@ -18,26 +18,15 @@ public class WeatherController {
     private final int days;
     private final WeatherSupplier weatherSupplier;
     private final WeatherStore weatherStore;
-    private boolean firstTime = true;
-    private final Scanner scanner;
 
     public WeatherController(int days, WeatherSupplier weatherSupplier, WeatherStore weatherStore) {
         this.days = days;
         this.weatherSupplier = weatherSupplier;
         this.weatherStore = weatherStore;
         this.locations = loadLocations();
-        this.scanner = new Scanner(System.in);
     }
 
     public void execute() throws IOException {
-        if (firstTime) {
-            updateWeatherData();
-            firstTime = false;
-        }
-        showWeatherForUserInput();
-    }
-
-    private void updateWeatherData() {
         Instant currentTime = Instant.now();
         List<Instant> forecastTimes = calculateForecastTimes(currentTime, days);
         for (Location location : locations) {
@@ -48,56 +37,6 @@ public class WeatherController {
             }
         }
         logger.info("Weather data update completed.");
-    }
-
-    private void showWeatherForUserInput() {
-        try {
-            System.out.print("Enter the name of the island: ");
-            String userInputLocationName = scanner.nextLine();
-            System.out.print("Enter the date in 'yyyy-MM-dd' format (for example, 2023-10-30): ");
-            String userInputDateString = scanner.nextLine();
-            Instant userInputDate = parseUserInputDate(userInputDateString);
-            findAndDisplayWeather(userInputLocationName, userInputDate);
-        } catch (Exception e) {
-            System.out.println("Incorrect Data.");
-        }
-    }
-
-    private Instant parseUserInputDate(String userInputDateString) throws DateTimeParseException {
-        return Instant.parse(userInputDateString + "T12:00:00Z");
-    }
-
-    private void findAndDisplayWeather(String userInputLocationName, Instant userInputDate) {
-        try {
-            findLocationByName(userInputLocationName)
-                    .ifPresentOrElse(
-                            userLocation -> displayWeatherData(userLocation, userInputDate),
-                            () -> System.out.println("No location found for the provided name: " + userInputLocationName)
-                    );
-        } catch (Exception e) {
-            System.out.println("Error finding location: " + e.getMessage());
-        }
-    }
-
-    private void displayWeatherData(Location userLocation, Instant userInputDate) {
-        try {
-            weatherStore.loadWeather(userLocation, userInputDate)
-                    .ifPresentOrElse(
-                            userWeatherData -> {
-                                System.out.println("Weather data for " + userLocation.getName() + " on " + userWeatherData.getTs() + ":");
-                                System.out.println(userWeatherData);
-                            },
-                            () -> System.out.println("No weather data found for " + userLocation.getName() + " on " + userInputDate)
-                    );
-        } catch (Exception e) {
-            System.out.println("Error loading weather data: " + e.getMessage());
-        }
-    }
-
-    private Optional<Location> findLocationByName(String name) {
-        return locations.stream()
-                .filter(location -> location.getName().equalsIgnoreCase(name))
-                .findFirst();
     }
 
     private void processLocation(Location location, List<Instant> forecastTimes) {

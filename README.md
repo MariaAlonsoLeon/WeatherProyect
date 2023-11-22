@@ -37,6 +37,10 @@ The project follows an organized structure with various packages that separate r
 
 - `jdbc`: Directory that stores the SQLite database and its connection.
 
+## Requirements
+
+To utilize this code, it is necessary to provide two arguments to the application: the first being the API key, and the second being the path to the database.
+
 ## Design
 
 ### Design Patterns and Principles

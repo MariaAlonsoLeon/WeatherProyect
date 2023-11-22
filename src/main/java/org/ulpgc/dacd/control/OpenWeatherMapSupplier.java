@@ -70,9 +70,7 @@ public class OpenWeatherMapSupplier implements WeatherSupplier {
                     return createWeatherFromForecastData(forecastItem, location, instant);
                 }
             }
-        } catch (Exception e) {
-            handleException("Error parsing JSON", e);
-        }
+        } catch (Exception e) {handleException("Error parsing JSON", e);}
         return null;
     }
 
