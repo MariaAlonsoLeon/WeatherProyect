@@ -18,7 +18,7 @@ public class Main {
         WeatherStore store = new SQLiteWeatherStore("jdbc:sqlite:" + dbPath);
         WeatherController weatherControl = new WeatherController(days, supplier, store);
         Timer timer = new Timer();
-        timer.scheduleAtFixedRate(new WeatherTask(weatherControl), 0, 6 * 60 * 60 * 1000);
+        timer.scheduleAtFixedRate(new WeatherTask(weatherControl), 0, 1 * 60 * 1000);
         Runtime.getRuntime().addShutdownHook(new Thread(timer::cancel));
     }
 }
