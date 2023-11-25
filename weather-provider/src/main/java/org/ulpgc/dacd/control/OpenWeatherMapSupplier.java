@@ -70,7 +70,9 @@ public class OpenWeatherMapSupplier implements WeatherSupplier {
                     return createWeatherFromForecastData(forecastItem, location, instant);
                 }
             }
-        } catch (Exception e) {handleException("Error parsing JSON", e);}
+        } catch (Exception e) {
+            handleException("Error parsing JSON", e);
+        }
         return null;
     }
 
@@ -97,7 +99,7 @@ public class OpenWeatherMapSupplier implements WeatherSupplier {
         int clouds = cloud.get(CLOUDS_KEY).getAsInt();
         float windSpeed = wind.get(WIND_SPEED_KEY).getAsFloat();
         float rainProbability = forecastData.get(RAIN_PROBABILITY_KEY).getAsFloat();
-        return new Weather(temperature, humidity, clouds, windSpeed, rainProbability, location, instant);
+        return new Weather(instant, "prediction-provider", instant, location, temperature, humidity, clouds, windSpeed, rainProbability);
     }
 
     private void handleException(String message, Exception e) {
