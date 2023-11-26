@@ -7,5 +7,5 @@ import java.time.Instant;
 import java.util.List;
 
 public interface WeatherSupplier {
-    List<Weather> getWeathers(Location location, List<Instant> instants) throws IOException;
+    List<String> getWeathers(Location location, List<Instant> instants) throws IOException;
 }

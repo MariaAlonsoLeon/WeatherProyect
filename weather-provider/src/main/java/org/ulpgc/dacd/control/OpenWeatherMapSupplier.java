@@ -1,12 +1,12 @@
 package org.ulpgc.dacd.control;
 
+import com.google.gson.*;
+import org.ulpgc.dacd.control.WeatherSupplier;
 import org.ulpgc.dacd.model.Location;
 import org.ulpgc.dacd.model.Weather;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+
 import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
@@ -33,13 +33,14 @@ public class OpenWeatherMapSupplier implements WeatherSupplier {
     }
 
     @Override
-    public List<Weather> getWeathers(Location location, List<Instant> instants) {
+    public List<String> getWeathers(Location location, List<Instant> instants) {
         String url = buildUrl(location);
+        System.out.println(url);
         return instants.stream()
                 .map(instant -> {
                     try {
                         String jsonWeather = getWeatherFromUrl(url);
-                        return parseJsonData(jsonWeather, location, instant);
+                        return parseJsonDataToJson(jsonWeather, location, instant);
                     } catch (IOException e) {
                         handleException("Error fetching weather data", e);
                         return null;
@@ -59,7 +60,7 @@ public class OpenWeatherMapSupplier implements WeatherSupplier {
         return document.text();
     }
 
-    private Weather parseJsonData(String jsonData, Location location, Instant instant) {
+    private String parseJsonDataToJson(String jsonData, Location location, Instant instant) {
         try {
             JsonObject jsonObject = JsonParser.parseString(jsonData).getAsJsonObject();
             JsonArray list = jsonObject.getAsJsonArray(LIST_KEY);
@@ -67,7 +68,7 @@ public class OpenWeatherMapSupplier implements WeatherSupplier {
             if (list != null) {
                 JsonObject forecastItem = findMatchingWeatherItem(list, instant);
                 if (forecastItem != null) {
-                    return createWeatherFromForecastData(forecastItem, location, instant);
+                    return convertWeatherToJson(createWeatherFromForecastData(forecastItem, location, instant));
                 }
             }
         } catch (Exception e) {
@@ -90,6 +91,11 @@ public class OpenWeatherMapSupplier implements WeatherSupplier {
         return null;
     }
 
+    private String convertWeatherToJson(Weather weather) {
+        Gson gson = prepareGson();
+        return gson.toJson(weather);
+    }
+
     private Weather createWeatherFromForecastData(JsonObject forecastData, Location location, Instant instant) {
         JsonObject main = forecastData.getAsJsonObject("main");
         JsonObject cloud = forecastData.getAsJsonObject("clouds");
@@ -99,10 +105,25 @@ public class OpenWeatherMapSupplier implements WeatherSupplier {
         int clouds = cloud.get(CLOUDS_KEY).getAsInt();
         float windSpeed = wind.get(WIND_SPEED_KEY).getAsFloat();
         float rainProbability = forecastData.get(RAIN_PROBABILITY_KEY).getAsFloat();
-        return new Weather(temperature, humidity, clouds, windSpeed, rainProbability, location, instant);
+
+        return new Weather(instant, "prediction-provider", instant, location, temperature, humidity, clouds, windSpeed, rainProbability);
     }
 
     private void handleException(String message, Exception e) {
         logger.log(Level.SEVERE, message, e);
+    }
+
+    private Gson prepareGson() {
+        return new GsonBuilder()
+                .setPrettyPrinting()
+                .registerTypeAdapter(Instant.class, new InstantSerializer())
+                .create();
+    }
+
+    private static class InstantSerializer implements JsonSerializer<Instant> {
+        @Override
+        public JsonElement serialize(Instant src, java.lang.reflect.Type typeOfSrc, JsonSerializationContext context) {
+            return new JsonPrimitive(src.toString());
+        }
     }
 }

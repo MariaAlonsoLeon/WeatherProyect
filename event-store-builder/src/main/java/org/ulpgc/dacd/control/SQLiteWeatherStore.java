@@ -79,8 +79,9 @@ public class SQLiteWeatherStore implements WeatherStore {
                 "rain = ?, " +
                 "humidity = ?, " +
                 "cloud = ?, " +
-                "wind_speed = ? " +
-                "WHERE date = ?";
+                "wind_speed = ?, " +
+                "ss = ?, " +
+                "predictionTime = ? WHERE date = ?";
         try (PreparedStatement preparedStatement = statement.getConnection().prepareStatement(updateQuery)) {
             preparedStatement.setFloat(1, weather.getTemperature());
             preparedStatement.setFloat(2, weather.getRain());
@@ -88,6 +89,8 @@ public class SQLiteWeatherStore implements WeatherStore {
             preparedStatement.setFloat(4, weather.getClouds());
             preparedStatement.setFloat(5, weather.getWindSpeed());
             preparedStatement.setString(6, weather.getTs().toString());
+            preparedStatement.setString(7, weather.getSs().toString());
+            preparedStatement.setString(8, weather.getPredictionTime().toString());
 
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
@@ -96,7 +99,7 @@ public class SQLiteWeatherStore implements WeatherStore {
     }
 
     private void insert(Statement statement, Weather weather, String tablename) {
-        String insertQuery = "INSERT INTO " + tablename + " VALUES (?, ?, ?, ?, ?, ?)";
+        String insertQuery = "INSERT INTO " + tablename + " VALUES (?, ?, ?, ?, ?, ?. ?, ?)";
         try (PreparedStatement preparedStatement = statement.getConnection().prepareStatement(insertQuery)) {
             preparedStatement.setString(1, weather.getTs().toString());
             preparedStatement.setFloat(2, weather.getTemperature());
@@ -104,6 +107,8 @@ public class SQLiteWeatherStore implements WeatherStore {
             preparedStatement.setInt(4, weather.getHumidity());
             preparedStatement.setFloat(5, weather.getClouds());
             preparedStatement.setFloat(6, weather.getWindSpeed());
+            preparedStatement.setString(7, weather.getSs().toString());
+            preparedStatement.setString(8, weather.getPredictionTime().toString());
 
             preparedStatement.execute();
         } catch (SQLException e) {
@@ -113,7 +118,7 @@ public class SQLiteWeatherStore implements WeatherStore {
 
     private void createTableIfNotExists(Connection connection, String tableName) {
         String createTableSQL = "CREATE TABLE IF NOT EXISTS " + tableName +
-                " (date TEXT PRIMARY KEY, temperature REAL, rain REAL, humidity INTEGER, cloud INTEGER, wind_speed REAL)";
+                " (date TEXT PRIMARY KEY, temperature REAL, rain REAL, humidity INTEGER, cloud INTEGER, wind_speed REAL, ss TEXT, predictionTime TEXT)";
         try (Statement statement = connection.createStatement()) {
             statement.execute(createTableSQL);
         } catch (SQLException e) {

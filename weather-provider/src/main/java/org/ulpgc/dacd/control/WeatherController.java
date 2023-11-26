@@ -4,12 +4,9 @@ import org.ulpgc.dacd.model.Location;
 import org.ulpgc.dacd.model.Weather;
 import java.io.IOException;
 import java.time.Instant;
-import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -20,13 +17,13 @@ public class WeatherController {
     private final List<Location> locations;
     private final int days;
     private final WeatherSupplier weatherSupplier;
-    private final WeatherStore weatherStore;
+    private final ActiveMQMessageSender messageSender;
 
-    public WeatherController(int days, WeatherSupplier weatherSupplier, WeatherStore weatherStore) {
+    public WeatherController(int days, WeatherSupplier weatherSupplier, ActiveMQMessageSender messageSender) {
         this.days = days;
         this.weatherSupplier = weatherSupplier;
-        this.weatherStore = weatherStore;
         this.locations = loadLocations();
+        this.messageSender = messageSender;
     }
 
     public void execute() throws IOException {
@@ -40,78 +37,15 @@ public class WeatherController {
             }
         }
         logger.info("Weather data update completed.");
-        showWeatherForUserInput();
-    }
-
-    public void showWeatherForUserInput() {
-        Scanner scanner = new Scanner(System.in);
-        do {
-            processUserInput(scanner);
-        } while (shouldRepeatOperation(scanner));
-        scanner.close();
-    }
-
-    private void processUserInput(Scanner scanner) {
-        try {
-            System.out.print("Enter the name of the island: ");
-            String userInputLocationName = scanner.nextLine();
-            System.out.print("Enter the date in 'yyyy-MM-dd' format (for example, 2023-10-30): ");
-            String userInputDateString = scanner.nextLine();
-            Instant userInputDate = parseUserInputDate(userInputDateString);
-            findAndDisplayWeather(userInputLocationName, userInputDate);
-        } catch (Exception e) {
-            System.out.println("Incorrect Data.");
-        }
-    }
-
-    private Instant parseUserInputDate(String userInputDateString) throws DateTimeParseException {
-        return Instant.parse(userInputDateString + "T12:00:00Z");
-    }
-
-    private void findAndDisplayWeather(String userInputLocationName, Instant userInputDate) {
-        try {
-            findLocationByName(userInputLocationName)
-                    .ifPresentOrElse(
-                            userLocation -> displayWeatherData(userLocation, userInputDate),
-                            () -> System.out.println("No location found for the provided name: " + userInputLocationName)
-                    );
-        } catch (Exception e) {
-            System.out.println("Error finding location: " + e.getMessage());
-        }
-    }
-
-    private void displayWeatherData(Location userLocation, Instant userInputDate) {
-        try {
-            weatherStore.loadWeather(userLocation, userInputDate)
-                    .ifPresentOrElse(
-                            userWeatherData -> {
-                                System.out.println("Weather data for " + userLocation.getName() + " on " + userWeatherData.getTs() + ":");
-                                System.out.println(userWeatherData);
-                            },
-                            () -> System.out.println("No weather data found for " + userLocation.getName() + " on " + userInputDate)
-                    );
-        } catch (Exception e) {
-            System.out.println("Error loading weather data: " + e.getMessage());
-        }
-    }
-
-    private Optional<Location> findLocationByName(String name) {
-        return locations.stream()
-                .filter(location -> location.getName().equalsIgnoreCase(name))
-                .findFirst();
-    }
-
-    private boolean shouldRepeatOperation(Scanner scanner) {
-        System.out.print("Do you want to make another query? (Yes/No) ");
-        String userResponse = scanner.nextLine();
-        return userResponse.equalsIgnoreCase("Yes");
     }
 
     private void processLocation(Location location, List<Instant> forecastTimes) {
         try {
-            List<Weather> weathers = weatherSupplier.getWeathers(location, forecastTimes);
+            List<String> weathers = weatherSupplier.getWeathers(location, forecastTimes);
             if (weathers != null && !weathers.isEmpty()) {
-                weatherStore.save(weathers);
+                for (String weather : weathers) {
+                    messageSender.sendMessage(weather);
+                }
             }
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Error getting weather for location " + location.getName(), e);
