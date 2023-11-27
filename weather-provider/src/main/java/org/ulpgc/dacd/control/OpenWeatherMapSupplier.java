@@ -35,7 +35,6 @@ public class OpenWeatherMapSupplier implements WeatherSupplier {
     @Override
     public List<String> getWeathers(Location location, List<Instant> instants) {
         String url = buildUrl(location);
-        System.out.println(url);
         return instants.stream()
                 .map(instant -> {
                     try {

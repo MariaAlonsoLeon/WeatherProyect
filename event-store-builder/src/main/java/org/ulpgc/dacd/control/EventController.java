@@ -2,19 +2,25 @@ package org.ulpgc.dacd.control;
 
 import org.ulpgc.dacd.model.Weather;
 
+import javax.jms.JMSException;
 import java.util.ArrayList;
 
 public class EventController {
-    private final Listener listener;
-    private final SQLiteWeatherStore SQLWeatherStore;
+    private final WeatherReceiver weatherReceiver;
+    private final WeatherStore weatherStore;
 
-    public EventController(Listener listener, SQLiteWeatherStore SQLWeatherStore) {
-        this.listener = listener;
-        this.SQLWeatherStore = SQLWeatherStore;
+    public EventController(WeatherReceiver weatherReceiver, WeatherStore weatherStore) {
+        this.weatherReceiver = weatherReceiver;
+        this.weatherStore = weatherStore;
     }
 
-    public void execute(){
-        ArrayList<Weather> weathers = this.listener.getWeather();
-        this.SQLWeatherStore.save(weathers);
+    public void execute() throws JMSException {
+        ArrayList<String> weathers = this.weatherReceiver.getWeather();
+
+        if (weathers != null) {
+            for (String weather : weathers) {
+                weatherStore.save(weather);
+            }
+        }
     }
 }

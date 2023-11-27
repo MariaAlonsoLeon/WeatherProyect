@@ -1,41 +1,40 @@
 package org.ulpgc.dacd.control;
 
-import com.google.gson.Gson;
+import com.google.gson.*;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.ulpgc.dacd.model.Weather;
 
 import javax.jms.*;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
-public class Listener implements WeatherReceiver{
+public class Listener implements WeatherReceiver {
 
-    public Listener() {}
+    private CountDownLatch latch;
+
+    public Listener() {
+        this.latch = new CountDownLatch(40);
+    }
 
     @Override
-    public ArrayList<Weather> getWeather() {
+    public ArrayList<String> getWeather() throws JMSException {
         String brokerUrl = "tcp://localhost:61616";
+        String topicName = "prediction.Weather";
 
-        String topicName = "prediciton.Weather";
+        ConnectionFactory connectionFactory = new ActiveMQConnectionFactory(brokerUrl);
 
-        ConnectionFactory connectionFactory = (ConnectionFactory) new ActiveMQConnectionFactory(brokerUrl);
+        ArrayList<String> weatherJson = new ArrayList<>();
+        ArrayList<Weather> weathers = new ArrayList<>();
+
+        Connection connection = connectionFactory.createConnection();
 
         try {
-            Connection connection = connectionFactory.createConnection();
-
             connection.start();
-
             Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-
             Topic topic = session.createTopic(topicName);
-
             MessageConsumer consumer = session.createConsumer(topic);
-
-            ArrayList<String> weatherJson = new ArrayList<>();
-            ArrayList<Weather> weathers = new ArrayList<>();
-            CountDownLatch latch = new CountDownLatch(40);
 
             consumer.setMessageListener(new MessageListener() {
                 @Override
@@ -45,7 +44,6 @@ public class Listener implements WeatherReceiver{
                             TextMessage textMessage = (TextMessage) message;
                             System.out.println("Received message: " + textMessage.getText());
                             weatherJson.add(textMessage.getText());
-
                             latch.countDown();
                         }
                     } catch (JMSException e) {
@@ -56,30 +54,45 @@ public class Listener implements WeatherReceiver{
 
             System.out.println("Waiting for messages. Please wait...");
 
-            try {
-                if (latch.await(5, TimeUnit.MINUTES)) {
-                    System.out.println("No more messages. Exiting...");
-                } else {
-                    System.out.println("Timed out waiting for messages. Exiting...");
-                }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            // Esperar hasta que se haya procesado al menos un mensaje
+            latch.await();
 
             consumer.close();
             session.close();
             connection.close();
 
-            for(String weatherString: weatherJson){
-                weathers.add(jsonToWeather(weatherString));
-            }
-            return weathers;
-        } catch (Exception e) {e.printStackTrace();}
-        return null;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return weatherJson;
     }
 
-    public static Weather jsonToWeather(String jsonWeather){
-        Gson gson = new Gson();
+    // Método para esperar a que se reciban mensajes antes de salir del programa principal
+    public void waitForMessages() {
+        try {
+            latch.await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static Weather jsonToWeather(String jsonWeather) {
+        Gson gson = prepareGson();
         return gson.fromJson(jsonWeather, Weather.class);
+    }
+
+    private static Gson prepareGson() {
+        return new GsonBuilder()
+                .setPrettyPrinting()
+                .registerTypeAdapter(Instant.class, new InstantSerializer())
+                .create();
+    }
+
+    private static class InstantSerializer implements JsonSerializer<Instant> {
+        @Override
+        public JsonElement serialize(Instant src, java.lang.reflect.Type typeOfSrc, JsonSerializationContext context) {
+            return new JsonPrimitive(src.toString());
+        }
     }
 }
