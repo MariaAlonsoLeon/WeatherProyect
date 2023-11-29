@@ -25,67 +25,70 @@ public class Listener implements WeatherReceiver {
         ConnectionFactory connectionFactory = new ActiveMQConnectionFactory(brokerUrl);
 
         ArrayList<String> weatherJson = new ArrayList<>();
-
         Connection connection = connectionFactory.createConnection();
 
         try {
-            connection.start();
-            Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-            Topic topic = session.createTopic(topicName);
-            MessageConsumer consumer = session.createConsumer(topic);
-
-            consumer.setMessageListener(new MessageListener() {
-                @Override
-                public void onMessage(Message message) {
-                    try {
-                        if (message instanceof TextMessage) {
-                            TextMessage textMessage = (TextMessage) message;
-                            System.out.println("Received message: " + textMessage.getText());
-                            weatherJson.add(textMessage.getText());
-                            latch.countDown();
-                        }
-                    } catch (JMSException e) {
-                        e.printStackTrace();
-                    }
-                }
-            });
+            setupConnection(connection);
+            Session session = createSession(connection);
+            Topic topic = createTopic(session, topicName);
+            MessageConsumer consumer = createMessageConsumer(session, topic, weatherJson);
 
             System.out.println("Waiting for messages. Please wait...");
-
-            // Esperar hasta que se haya procesado al menos un mensaje
-            latch.await();
+            waitForMessages();
 
             consumer.close();
             session.close();
             connection.close();
-
         } catch (Exception e) {
-            e.printStackTrace();
+            handleException(e);
         }
 
         return weatherJson;
     }
 
-    // Método para esperar a que se reciban mensajes antes de salir del programa principal
-    public void waitForMessages() {
+    private void setupConnection(Connection connection) throws JMSException {
+        connection.start();
+    }
+
+    private Session createSession(Connection connection) throws JMSException {
+        return connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+    }
+
+    private Topic createTopic(Session session, String topicName) throws JMSException {
+        return session.createTopic(topicName);
+    }
+
+    private MessageConsumer createMessageConsumer(Session session, Topic topic, ArrayList<String> weatherJson)
+            throws JMSException {
+        MessageConsumer consumer = session.createConsumer(topic);
+
+        consumer.setMessageListener(message -> processTextMessage(message, weatherJson));
+
+        return consumer;
+    }
+
+    private void waitForMessages() {
         try {
             latch.await();
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            handleException(e);
         }
     }
 
-    private static Gson prepareGson() {
-        return new GsonBuilder()
-                .setPrettyPrinting()
-                .registerTypeAdapter(Instant.class, new InstantSerializer())
-                .create();
+    private void processTextMessage(Message message, ArrayList<String> weatherJson) {
+        try {
+            if (message instanceof TextMessage) {
+                TextMessage textMessage = (TextMessage) message;
+                System.out.println("Received message: " + textMessage.getText());
+                weatherJson.add(textMessage.getText());
+                latch.countDown();
+            }
+        } catch (JMSException e) {
+            handleException(e);
+        }
     }
 
-    private static class InstantSerializer implements JsonSerializer<Instant> {
-        @Override
-        public JsonElement serialize(Instant src, java.lang.reflect.Type typeOfSrc, JsonSerializationContext context) {
-            return new JsonPrimitive(src.toString());
-        }
+    private void handleException(Exception e) {
+        e.printStackTrace();
     }
 }

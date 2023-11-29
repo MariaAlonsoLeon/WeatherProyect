@@ -13,7 +13,6 @@ public class EventController {
 
     public void execute() throws JMSException {
         ArrayList<String> weathers = this.listener.getWeather();
-        System.out.println("Hola");
         if (weathers != null) {
             weatherStore.save(weathers);
         }

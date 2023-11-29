@@ -38,25 +38,6 @@ public class ActiveMQMessageSender {
         }
     }
 
-
-    /*public void sendMessages(List<Weather> weatherList) {
-        ConnectionFactory connectionFactory = new ActiveMQConnectionFactory(brokerURL);
-        try (Connection connection = connectionFactory.createConnection()) {
-            connection.start();
-            Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-            Topic topic = session.createTopic(QUEUE_NAME);
-            MessageProducer producer = session.createProducer(topic);
-
-            String jsonWeatherList = weatherListToJson(weatherList);
-            TextMessage message = session.createTextMessage(jsonWeatherList);
-            producer.send(message);
-
-            System.out.println("Message sent to the queue: " + message.getText());
-        } catch (JMSException e) {
-            e.printStackTrace();
-        }
-    }*/
-
     private static String weatherListToJson(Weather weather) {
         Gson gson = prepareGson();
         return gson.toJson(weather);

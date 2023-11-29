@@ -10,8 +10,6 @@ public class Main {
         Listener listener = new Listener();
         EventController controller = new EventController(listener, new FileWeatherStore(args[0]));
         controller.execute();
-        // Esperar a que se reciban mensajes antes de salir del programa
-        listener.waitForMessages();
     }
 
 }
