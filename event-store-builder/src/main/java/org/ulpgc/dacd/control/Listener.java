@@ -3,7 +3,6 @@ package org.ulpgc.dacd.control;
 import com.google.gson.*;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
-import org.ulpgc.dacd.model.Weather;
 
 import javax.jms.*;
 import java.time.Instant;
@@ -26,7 +25,6 @@ public class Listener implements WeatherReceiver {
         ConnectionFactory connectionFactory = new ActiveMQConnectionFactory(brokerUrl);
 
         ArrayList<String> weatherJson = new ArrayList<>();
-        ArrayList<Weather> weathers = new ArrayList<>();
 
         Connection connection = connectionFactory.createConnection();
 
@@ -75,11 +73,6 @@ public class Listener implements WeatherReceiver {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-    }
-
-    public static Weather jsonToWeather(String jsonWeather) {
-        Gson gson = prepareGson();
-        return gson.fromJson(jsonWeather, Weather.class);
     }
 
     private static Gson prepareGson() {

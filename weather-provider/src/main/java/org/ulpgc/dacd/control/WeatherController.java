@@ -29,26 +29,30 @@ public class WeatherController {
     public void execute() throws IOException {
         Instant currentTime = Instant.now();
         List<Instant> forecastTimes = calculateForecastTimes(currentTime, days);
+        List<Weather> weathers = new ArrayList<>();
         for (Location location : locations) {
             try {
-                processLocation(location, forecastTimes);
+                for(Weather weather: processLocation(location, forecastTimes)) {
+                    weathers.add(weather);
+                }
             } catch (Exception e) {
                 logger.log(Level.SEVERE, "Error processing location: " + e.getMessage(), e);
             }
         }
+        sendEvents(weathers);
         logger.info("Weather data update completed.");
     }
 
-    private void processLocation(Location location, List<Instant> forecastTimes) {
-        try {
-            List<String> weathers = weatherSupplier.getWeathers(location, forecastTimes);
-            if (weathers != null && !weathers.isEmpty()) {
-                for (String weather : weathers) {
-                    messageSender.sendMessage(weather);
-                }
-            }
-        } catch (IOException e) {
-            logger.log(Level.SEVERE, "Error getting weather for location " + location.getName(), e);
+
+    private List<Weather> processLocation(Location location, List<Instant> forecastTimes) throws IOException {
+        List<Weather> weathers = weatherSupplier.getWeathers(location, forecastTimes);
+        return weathers;
+
+    }
+
+    private void sendEvents(List<Weather> weathers){
+        if (weathers != null && !weathers.isEmpty()) {
+            messageSender.sendMessage(weathers);
         }
     }
 

@@ -13,9 +13,9 @@ public class Weather {
     private final float windSpeed;
     private final float rain;
 
-    public Weather(Instant ts, String ss, Instant predictionTime, Location location,
+    public Weather(String ss, Instant predictionTime, Location location,
                    float temperature, int humidity, int clouds, float windSpeed, float rain) {
-        this.ts = ts;
+        this.ts = Instant.now();
         this.ss = ss;
         this.predictionTime = predictionTime;
         this.location = location;

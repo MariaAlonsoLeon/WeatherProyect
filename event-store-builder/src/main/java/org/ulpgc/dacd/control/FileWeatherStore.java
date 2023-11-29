@@ -1,10 +1,6 @@
 package org.ulpgc.dacd.control;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonSyntaxException;
-import com.google.gson.TypeAdapter;
-import org.ulpgc.dacd.model.Weather;
+import com.google.gson.*;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -13,10 +9,11 @@ import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.Date;
+import java.util.List;
 
 public class FileWeatherStore implements WeatherStore {
 
-    private static final String EVENTSTORE_DIRECTORY = "\\eventstoreDos\\prediction.Weather\\";
+    private static final String EVENTSTORE_DIRECTORY = "\\eventstore5\\prediction.Weather\\";
     private final String baseDirectory;
 
     public FileWeatherStore(String baseDirectory) {
@@ -24,7 +21,40 @@ public class FileWeatherStore implements WeatherStore {
     }
 
     @Override
+    public void save(List<String> weatherJsonList) {
+        System.out.println("Prueba");
+        String weatherJson = weatherJsonList.get(0);
+        String ss = getJsonValue(weatherJson, "ss");
+        Instant ts = Instant.parse(getJsonValue(weatherJson, "ts"));
+        String dateString = new SimpleDateFormat("yyyyMMdd").format(Date.from(ts)); // Convierte la fecha a YYYYMMDD
+        createDirectoryIfNotExists(ss);
+        String filePath = Paths.get(baseDirectory, EVENTSTORE_DIRECTORY, ss, dateString + ".events").toString();
+        try {
+            for (String weatherEvent : weatherJsonList) {
+                try (FileWriter writer = new FileWriter(filePath, true)) {
+                    writer.write(weatherEvent + "\n");
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private String getJsonValue(String json, String key) {
+        try {
+            JsonObject jsonObject = JsonParser.parseString(json).getAsJsonObject();
+            if (jsonObject.has(key)) {
+                return jsonObject.get(key).getAsString();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return "";
+    }
+
+    /*@Override
     public void save(String weatherJson) {
+        System.out.println("Prueba");
         try {
             Weather weather = jsonToWeather(weatherJson);
 
@@ -38,7 +68,7 @@ public class FileWeatherStore implements WeatherStore {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
+    }*/
 
     private void createDirectoryIfNotExists(String ss) {
         String directoryPath = Paths.get(baseDirectory, EVENTSTORE_DIRECTORY, ss).toString();
@@ -53,41 +83,4 @@ public class FileWeatherStore implements WeatherStore {
         }
     }
 
-    private Weather jsonToWeather(String jsonWeather) {
-        Gson gson = prepareGson();
-        try {
-            return gson.fromJson(jsonWeather, Weather.class);
-        } catch (JsonSyntaxException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    private Gson prepareGson() {
-        return new GsonBuilder()
-                .setPrettyPrinting()
-                .registerTypeAdapter(Instant.class, new InstantTypeAdapter())
-                .create();
-    }
-
-    private static class InstantTypeAdapter extends TypeAdapter<Instant> {
-        @Override
-        public void write(com.google.gson.stream.JsonWriter out, Instant value) throws IOException {
-            if (value == null) {
-                out.nullValue();
-            } else {
-                out.value(value.toString());
-            }
-        }
-
-        @Override
-        public Instant read(com.google.gson.stream.JsonReader in) throws IOException {
-            if (in.peek() == com.google.gson.stream.JsonToken.NULL) {
-                in.nextNull();
-                return null;
-            }
-            String value = in.nextString();
-            return Instant.parse(value);
-        }
-    }
 }

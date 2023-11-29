@@ -15,9 +15,7 @@ public class EventController {
         ArrayList<String> weathers = this.listener.getWeather();
         System.out.println("Hola");
         if (weathers != null) {
-            for (String weather : weathers) {
-                weatherStore.save(weather);
-            }
+            weatherStore.save(weathers);
         }
     }
 }
