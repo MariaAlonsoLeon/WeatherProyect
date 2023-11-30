@@ -2,11 +2,15 @@ package org.ulpgc.dacd.control;
 
 import org.ulpgc.dacd.model.Location;
 import org.ulpgc.dacd.model.Weather;
+
 import java.io.IOException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -24,33 +28,40 @@ public class WeatherController {
         this.weatherSupplier = weatherSupplier;
         this.locations = loadLocations();
         this.messageSender = messageSender;
+
+        // Iniciar la tarea periódica
+        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+        scheduler.scheduleAtFixedRate(this::execute, 0, 1, TimeUnit.MINUTES);
     }
 
-    public void execute() throws IOException {
+    public void execute() {
         Instant currentTime = Instant.now();
         List<Instant> forecastTimes = calculateForecastTimes(currentTime, days);
         List<Weather> weathers = new ArrayList<>();
+        unifyWeatherLists(weathers, forecastTimes);
+        sendEvents(weathers);
+        logger.info("Weather data update completed.");
+    }
+
+    private List<Weather> unifyWeatherLists(List<Weather> weathers, List<Instant> forecastTimes) {
         for (Location location : locations) {
             try {
-                for(Weather weather: processLocation(location, forecastTimes)) {
+                for (Weather weather : processLocation(location, forecastTimes)) {
                     weathers.add(weather);
                 }
             } catch (Exception e) {
                 logger.log(Level.SEVERE, "Error processing location: " + e.getMessage(), e);
             }
         }
-        sendEvents(weathers);
-        logger.info("Weather data update completed.");
+        return weathers;
     }
-
 
     private List<Weather> processLocation(Location location, List<Instant> forecastTimes) throws IOException {
         List<Weather> weathers = weatherSupplier.getWeathers(location, forecastTimes);
         return weathers;
-
     }
 
-    private void sendEvents(List<Weather> weathers){
+    private void sendEvents(List<Weather> weathers) {
         if (weathers != null && !weathers.isEmpty()) {
             messageSender.sendMessage(weathers);
         }
@@ -74,4 +85,5 @@ public class WeatherController {
         locations.add(new Location("La Graciosa", 29.23, -13.5));
         return locations;
     }
+
 }

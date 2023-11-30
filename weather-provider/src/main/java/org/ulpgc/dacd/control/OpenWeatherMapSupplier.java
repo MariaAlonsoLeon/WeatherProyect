@@ -100,7 +100,7 @@ public class OpenWeatherMapSupplier implements WeatherSupplier {
         float windSpeed = wind.get(WIND_SPEED_KEY).getAsFloat();
         float rainProbability = forecastData.get(RAIN_PROBABILITY_KEY).getAsFloat();
 
-        return new Weather("prediction-provider", instant, location, temperature, humidity, clouds, windSpeed, rainProbability);
+        return new Weather("WeatherProvider/OpenWeatherMap", instant, location, temperature, humidity, clouds, windSpeed, rainProbability);
     }
 
     private void handleException(String message, Exception e) {

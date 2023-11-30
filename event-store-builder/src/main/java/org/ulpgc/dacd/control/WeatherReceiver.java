@@ -1,8 +1,8 @@
 package org.ulpgc.dacd.control;
 
-import javax.jms.JMSException;
+import org.ulpgc.dacd.control.exceptions.WeatherReceiverException;
 import java.util.ArrayList;
 
 public interface WeatherReceiver {
-    public ArrayList<String> getWeather() throws JMSException;
+    ArrayList<String> getWeather() throws WeatherReceiverException;
 }

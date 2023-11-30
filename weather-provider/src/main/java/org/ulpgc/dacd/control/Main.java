@@ -1,6 +1,5 @@
 package org.ulpgc.dacd.control;
 
-import java.util.Timer;
 import java.util.logging.Logger;
 
 public class Main {
@@ -16,8 +15,5 @@ public class Main {
         WeatherSupplier supplier = new OpenWeatherMapSupplier("https://api.openweathermap.org/data/2.5/forecast?", apiKey);
         ActiveMQMessageSender activeMQMessageSender = new ActiveMQMessageSender("tcp://localhost:61616");
         WeatherController weatherControl = new WeatherController(days, supplier, activeMQMessageSender);
-        Timer timer = new Timer();
-        timer.scheduleAtFixedRate(new WeatherTask(weatherControl), 0, 6 * 60 * 60 * 1000);
-        Runtime.getRuntime().addShutdownHook(new Thread(timer::cancel));
     }
 }
