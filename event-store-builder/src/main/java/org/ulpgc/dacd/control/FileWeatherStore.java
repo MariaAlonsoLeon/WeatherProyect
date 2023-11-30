@@ -14,7 +14,7 @@ import java.util.List;
 
 public class FileWeatherStore implements WeatherStore {
 
-    private static final String EVENTSTORE_DIRECTORY = "\\eventstore6\\prediction.Weather\\";
+    private static final String EVENTSTORE_DIRECTORY = "\\eventstore7\\prediction.Weather\\";
     private final String baseDirectory;
 
     public FileWeatherStore(String baseDirectory) {
