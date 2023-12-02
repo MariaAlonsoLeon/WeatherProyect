@@ -1,7 +1,5 @@
 package org.ulpgc.dacd.control;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.ulpgc.dacd.control.exceptions.WeatherReceiverException;
 
@@ -29,7 +27,7 @@ public class Listener implements WeatherReceiver {
             Connection connection = connectionFactory.createConnection();
             try {
                 setupConnection(connection);
-                Session session = createSession(connection);
+                Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
                 Topic topic = createTopic(session, topicName);
                 MessageConsumer consumer = createMessageConsumer(session, topic, weatherJson);
                 System.out.println("Waiting for messages. Please wait...");
@@ -52,6 +50,7 @@ public class Listener implements WeatherReceiver {
     }
 
     private void setupConnection(Connection connection) throws JMSException {
+        connection.setClientID("123");
         connection.start();
     }
 
@@ -65,7 +64,7 @@ public class Listener implements WeatherReceiver {
 
     private MessageConsumer createMessageConsumer(Session session, Topic topic, ArrayList<String> weatherJson)
             throws JMSException {
-        MessageConsumer consumer = session.createConsumer(topic);
+        MessageConsumer consumer = session.createDurableSubscriber(topic, "María");
 
         consumer.setMessageListener(message -> {
             try {
@@ -82,7 +81,6 @@ public class Listener implements WeatherReceiver {
         try {
             latch.await();
         } catch (InterruptedException e) {
-            // Lanzar WeatherReceiverException en lugar de InterruptedException
             throw new WeatherReceiverException("Error en la espera de mensajes", e);
         }
     }
@@ -96,7 +94,6 @@ public class Listener implements WeatherReceiver {
                 latch.countDown();
             }
         } catch (JMSException e) {
-            // Lanzar WeatherReceiverException en lugar de JMSException
             throw new WeatherReceiverException("Error en el procesamiento de mensajes de texto", e);
         }
     }
