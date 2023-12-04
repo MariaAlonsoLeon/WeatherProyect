@@ -8,7 +8,7 @@ import java.util.TimerTask;
 
 public class Main {
 
-    public static void main(String[] args) throws WeatherReceiverException {
+    public static void main(String[] args) throws WeatherReceiverException, JMSException {
         String brokerUrl = "tcp://localhost:61616";
         String topicName = "prediction.Weather";
         Listener listener = new Listener(brokerUrl, topicName);

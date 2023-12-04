@@ -1,100 +1,58 @@
 package org.ulpgc.dacd.control;
 
+import javax.jms.Connection;
+import javax.jms.ConnectionFactory;
+import javax.jms.JMSException;
+import javax.jms.Message;
+import javax.jms.MessageConsumer;
+import javax.jms.Session;
+import javax.jms.TextMessage;
+import javax.jms.Topic;
+
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.ulpgc.dacd.control.exceptions.WeatherReceiverException;
 
-import javax.jms.*;
 import java.util.ArrayList;
-import java.util.concurrent.CountDownLatch;
+import java.util.List;
 
 public class Listener implements WeatherReceiver {
+    private final Connection connection;
+    private final Session session;
+    private final Topic topic;
+    private final MessageConsumer consumer;
 
-    private CountDownLatch latch;
-    private String brokerUrl;
-    private String topicName;
+    public Listener(String brokerUrl, String topicName) throws WeatherReceiverException {
+        try {
+            ConnectionFactory connectionFactory = new ActiveMQConnectionFactory(brokerUrl);
+            connection = connectionFactory.createConnection();
+            connection.setClientID("weatherClient");
+            connection.start();
 
-    public Listener(String brokerUrl, String topicName) {
-        this.brokerUrl = brokerUrl;
-        this.topicName = topicName;
-        this.latch = new CountDownLatch(40);
+            session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+            topic = session.createTopic(topicName);
+            consumer = session.createDurableSubscriber(topic, "weatherSubscription");
+        } catch (JMSException e) {
+            throw new WeatherReceiverException("Error creating listener", e);
+        }
     }
 
     @Override
     public ArrayList<String> getWeather() throws WeatherReceiverException {
+        List<String> eventList = new ArrayList<>();
         try {
-            ConnectionFactory connectionFactory = new ActiveMQConnectionFactory(brokerUrl);
-            ArrayList<String> weatherJson = new ArrayList<>();
-            Connection connection = connectionFactory.createConnection();
-            try {
-                setupConnection(connection);
-                Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-                Topic topic = createTopic(session, topicName);
-                MessageConsumer consumer = createMessageConsumer(session, topic, weatherJson);
-                System.out.println("Waiting for messages. Please wait...");
-                waitForMessages();
-                consumer.close();
-                session.close();
-            } finally {
-                if (connection != null) {
-                    try {
-                        connection.close();
-                    } catch (JMSException e) {
-                        throw new WeatherReceiverException("Error al cerrar la conexión", e);
-                    }
+            System.out.println("Prueba");
+            for (int i = 0; i < 40; i++) {
+                Message message = consumer.receive();
+                if (message instanceof TextMessage) {
+                    TextMessage textMessage = (TextMessage) message;
+                    System.out.println(textMessage.getText());
+                    eventList.add(textMessage.getText());
                 }
             }
-            return weatherJson;
-        } catch (Exception e) {
-            throw new WeatherReceiverException("Error general en la obtención de datos meteorológicos", e);
-        }
-    }
-
-    private void setupConnection(Connection connection) throws JMSException {
-        connection.setClientID("123");
-        connection.start();
-    }
-
-    private Session createSession(Connection connection) throws JMSException {
-        return connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-    }
-
-    private Topic createTopic(Session session, String topicName) throws JMSException {
-        return session.createTopic(topicName);
-    }
-
-    private MessageConsumer createMessageConsumer(Session session, Topic topic, ArrayList<String> weatherJson)
-            throws JMSException {
-        MessageConsumer consumer = session.createDurableSubscriber(topic, "María");
-
-        consumer.setMessageListener(message -> {
-            try {
-                processTextMessage(message, weatherJson);
-            } catch (WeatherReceiverException e) {
-                throw new RuntimeException(e);
-            }
-        });
-
-        return consumer;
-    }
-
-    private void waitForMessages() throws WeatherReceiverException {
-        try {
-            latch.await();
-        } catch (InterruptedException e) {
-            throw new WeatherReceiverException("Error en la espera de mensajes", e);
-        }
-    }
-
-    private void processTextMessage(Message message, ArrayList<String> weatherJson) throws WeatherReceiverException {
-        try {
-            if (message instanceof TextMessage) {
-                TextMessage textMessage = (TextMessage) message;
-                System.out.println("Received message: " + textMessage.getText());
-                weatherJson.add(textMessage.getText());
-                latch.countDown();
-            }
         } catch (JMSException e) {
-            throw new WeatherReceiverException("Error en el procesamiento de mensajes de texto", e);
+            throw new WeatherReceiverException("Error receiving weather events", e);
         }
+
+        return (ArrayList<String>) eventList;
     }
 }
