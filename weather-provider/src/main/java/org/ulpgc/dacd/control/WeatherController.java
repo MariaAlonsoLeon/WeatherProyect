@@ -37,18 +37,15 @@ public class WeatherController {
     public void execute() {
         Instant currentTime = Instant.now();
         List<Instant> forecastTimes = calculateForecastTimes(currentTime, days);
-        List<Weather> weathers = new ArrayList<>();
-        unifyWeatherLists(weathers, forecastTimes);
-        sendEvents(weathers);
+        sendEvents(unifyWeatherLists(forecastTimes));
         logger.info("Weather data update completed.");
     }
 
-    private List<Weather> unifyWeatherLists(List<Weather> weathers, List<Instant> forecastTimes) {
+    private List<Weather> unifyWeatherLists(List<Instant> forecastTimes) {
+        List<Weather> weathers = new ArrayList<>();
         for (Location location : locations) {
             try {
-                for (Weather weather : processLocation(location, forecastTimes)) {
-                    weathers.add(weather);
-                }
+                weathers.addAll(processLocation(location, forecastTimes));
             } catch (Exception e) {
                 logger.log(Level.SEVERE, "Error processing location: " + e.getMessage(), e);
             }
@@ -57,13 +54,12 @@ public class WeatherController {
     }
 
     private List<Weather> processLocation(Location location, List<Instant> forecastTimes) throws IOException {
-        List<Weather> weathers = weatherSupplier.getWeathers(location, forecastTimes);
-        return weathers;
+        return weatherSupplier.getWeathers(location, forecastTimes);
     }
 
     private void sendEvents(List<Weather> weathers) {
-        if (weathers != null && !weathers.isEmpty()) {
-            messageSender.sendMessage(weathers);
+        for (Weather weather : weathers) {
+            messageSender.sendMessage(weather);
         }
     }
 
@@ -85,5 +81,4 @@ public class WeatherController {
         locations.add(new Location("La Graciosa", 29.23, -13.5));
         return locations;
     }
-
 }

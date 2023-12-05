@@ -10,24 +10,23 @@ import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.Date;
-import java.util.List;
 
-public class FileWeatherStore implements WeatherStore {
+public class FileEventStoreBuilder implements WeatherStore {
 
     private static final String EVENTSTORE_DIRECTORY = "\\eventstore7\\prediction.Weather\\";
     private final String baseDirectory;
 
-    public FileWeatherStore(String baseDirectory) {
+    public FileEventStoreBuilder(String baseDirectory) {
         this.baseDirectory = baseDirectory;
     }
 
     @Override
-    public void save(List<String> weatherJsonList) {
-        String ss = getJsonValue(weatherJsonList.get(0), "ss");
-        String dateString = getDateString(weatherJsonList.get(0));
+    public void save(String weatherJson) {
+        String ss = getJsonValue(weatherJson, "ss");
+        String dateString = getDateString(weatherJson);
         createDirectoryIfNotExists(ss);
         String filePath = buildFilePath(ss, dateString);
-        writeWeatherEventsToFile(weatherJsonList, filePath);
+        writeWeatherEventToFile(weatherJson, filePath);
     }
 
     private String getDateString(String weatherJson) {
@@ -39,13 +38,9 @@ public class FileWeatherStore implements WeatherStore {
         return Paths.get(baseDirectory, EVENTSTORE_DIRECTORY, ss, dateString + ".events").toString();
     }
 
-    private void writeWeatherEventsToFile(List<String> weatherJsonList, String filePath) {
-        try {
-            for (String weatherEvent : weatherJsonList) {
-                try (FileWriter writer = new FileWriter(filePath, true)) {
-                    writer.write(weatherEvent + "\n");
-                }
-            }
+    private void writeWeatherEventToFile(String weatherJson, String filePath) {
+        try (FileWriter writer = new FileWriter(filePath, true)) {
+            writer.write(weatherJson + "\n");
         } catch (IOException e) {
             handleIOException(e);
         }
@@ -79,6 +74,7 @@ public class FileWeatherStore implements WeatherStore {
     private void handleJsonParseException(Exception e) {
         e.printStackTrace();
     }
+
     private void handleIOException(IOException e) {
         e.printStackTrace();
     }
