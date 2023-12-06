@@ -7,17 +7,18 @@ import org.ulpgc.dacd.model.Weather;
 import javax.jms.*;
 import java.time.Instant;
 
-public class ActiveMQMessageSender {
+public class JMSWeatherStore implements TopicSender{
     private static final String QUEUE_NAME = "prediction.Weather";
     private final String brokerURL;
 
-    public ActiveMQMessageSender(String brokerURL) {
+    public JMSWeatherStore(String brokerURL) {
         this.brokerURL = brokerURL;
     }
 
+    @Override
     public void sendMessage(Weather weather) {
         try (Connection connection = createConnection()) {
-            connection.setClientID("weatherSender"); // Set the client ID for durability
+            connection.setClientID("PredictionProvider");
             connection.start();
             Session session = createSession(connection);
             Topic topic = createTopic(session);

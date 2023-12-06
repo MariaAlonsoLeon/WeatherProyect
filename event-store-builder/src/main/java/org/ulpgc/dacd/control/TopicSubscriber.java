@@ -9,7 +9,7 @@ public class TopicSubscriber implements Suscriber {
 
     private Connection connection;
     private Session session;
-    private final FileEventStoreBuilder fileEventStoreBuilder;
+    private final EventStoreBuilder fileEventStoreBuilder;
 
     public TopicSubscriber(FileEventStoreBuilder fileEventStoreBuilder) {
         this.fileEventStoreBuilder = fileEventStoreBuilder;
@@ -28,7 +28,7 @@ public class TopicSubscriber implements Suscriber {
 
     private void initializeConnection() throws JMSException {
         String brokerUrl = "tcp://localhost:61616";
-        String clientId = "weatherClient";
+        String clientId = "EventStoreBuilder";
         ConnectionFactory connectionFactory = new ActiveMQConnectionFactory(brokerUrl);
         connection = connectionFactory.createConnection();
         connection.setClientID(clientId);
@@ -44,7 +44,7 @@ public class TopicSubscriber implements Suscriber {
     private void initializeMessageListener() throws JMSException {
         String topicName = "prediction.Weather";
         Topic topic = session.createTopic(topicName);
-        MessageConsumer consumer = createDurableSubscriber(topic, "weatherSubscription");
+        MessageConsumer consumer = createDurableSubscriber(topic, "EventStoreBuilder-prediction.Weather");
         consumer.setMessageListener(createMessageListener());
     }
 
@@ -76,11 +76,4 @@ public class TopicSubscriber implements Suscriber {
         fileEventStoreBuilder.save(receivedMessage);
         System.out.println("Received message '" + receivedMessage + "'");
     }
-
-    /*@Override
-    public void stop() throws JMSException {
-        if (connection != null) {
-            connection.close();
-        }
-    }*/
 }

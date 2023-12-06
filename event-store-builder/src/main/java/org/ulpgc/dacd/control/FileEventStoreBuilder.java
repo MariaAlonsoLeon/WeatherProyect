@@ -11,7 +11,7 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.Date;
 
-public class FileEventStoreBuilder implements WeatherStore {
+public class FileEventStoreBuilder implements EventStoreBuilder {
 
     private static final String EVENTSTORE_DIRECTORY = "\\eventstore7\\prediction.Weather\\";
     private final String baseDirectory;
@@ -21,16 +21,16 @@ public class FileEventStoreBuilder implements WeatherStore {
     }
 
     @Override
-    public void save(String weatherJson) {
-        String ss = getJsonValue(weatherJson, "ss");
-        String dateString = getDateString(weatherJson);
+    public void save(String message) {
+        String ss = getJsonValue(message, "ss");
+        String dateString = getDateString(message);
         createDirectoryIfNotExists(ss);
         String filePath = buildFilePath(ss, dateString);
-        writeWeatherEventToFile(weatherJson, filePath);
+        writeEventToFile(message, filePath);
     }
 
-    private String getDateString(String weatherJson) {
-        Instant ts = Instant.parse(getJsonValue(weatherJson, "ts"));
+    private String getDateString(String message) {
+        Instant ts = Instant.parse(getJsonValue(message, "ts"));
         return new SimpleDateFormat("yyyyMMdd").format(Date.from(ts));
     }
 
@@ -38,9 +38,9 @@ public class FileEventStoreBuilder implements WeatherStore {
         return Paths.get(baseDirectory, EVENTSTORE_DIRECTORY, ss, dateString + ".events").toString();
     }
 
-    private void writeWeatherEventToFile(String weatherJson, String filePath) {
+    private void writeEventToFile(String message, String filePath) {
         try (FileWriter writer = new FileWriter(filePath, true)) {
-            writer.write(weatherJson + "\n");
+            writer.write(message + "\n");
         } catch (IOException e) {
             handleIOException(e);
         }
@@ -49,7 +49,6 @@ public class FileEventStoreBuilder implements WeatherStore {
     private void createDirectoryIfNotExists(String ss) {
         String directoryPath = Paths.get(baseDirectory, EVENTSTORE_DIRECTORY, ss).toString();
         File directory = new File(directoryPath);
-
         if (!directory.exists()) {
             if (directory.mkdirs()) {
                 System.out.println("Directory created: " + directoryPath);
@@ -59,9 +58,9 @@ public class FileEventStoreBuilder implements WeatherStore {
         }
     }
 
-    private String getJsonValue(String json, String key) {
+    private String getJsonValue(String message, String key) {
         try {
-            JsonObject jsonObject = JsonParser.parseString(json).getAsJsonObject();
+            JsonObject jsonObject = JsonParser.parseString(message).getAsJsonObject();
             if (jsonObject.has(key)) {
                 return jsonObject.get(key).getAsString();
             }

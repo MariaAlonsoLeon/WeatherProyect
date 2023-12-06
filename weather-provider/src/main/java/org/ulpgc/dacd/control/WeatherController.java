@@ -1,5 +1,6 @@
 package org.ulpgc.dacd.control;
 
+import org.ulpgc.dacd.control.exceptions.WeatherDataException;
 import org.ulpgc.dacd.model.Location;
 import org.ulpgc.dacd.model.Weather;
 
@@ -21,15 +22,14 @@ public class WeatherController {
     private final List<Location> locations;
     private final int days;
     private final WeatherSupplier weatherSupplier;
-    private final ActiveMQMessageSender messageSender;
+    private final JMSWeatherStore jmsWeatherStore;
 
-    public WeatherController(int days, WeatherSupplier weatherSupplier, ActiveMQMessageSender messageSender) {
+    public WeatherController(int days, List<Location> locations, WeatherSupplier weatherSupplier, JMSWeatherStore jmsWeatherStore) {
         this.days = days;
+        this.locations = locations;
         this.weatherSupplier = weatherSupplier;
-        this.locations = loadLocations();
-        this.messageSender = messageSender;
+        this.jmsWeatherStore = jmsWeatherStore;
 
-        // Iniciar la tarea periódica
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
         scheduler.scheduleAtFixedRate(this::execute, 0, 1, TimeUnit.MINUTES);
     }
@@ -53,13 +53,13 @@ public class WeatherController {
         return weathers;
     }
 
-    private List<Weather> processLocation(Location location, List<Instant> forecastTimes) throws IOException {
+    private List<Weather> processLocation(Location location, List<Instant> forecastTimes) throws WeatherDataException {
         return weatherSupplier.getWeathers(location, forecastTimes);
     }
 
     private void sendEvents(List<Weather> weathers) {
         for (Weather weather : weathers) {
-            messageSender.sendMessage(weather);
+            jmsWeatherStore.sendMessage(weather);
         }
     }
 
@@ -67,18 +67,5 @@ public class WeatherController {
         return IntStream.range(0, days)
                 .mapToObj(i -> currentTime.plus(i + 1, ChronoUnit.DAYS).truncatedTo(ChronoUnit.DAYS).plus(12, ChronoUnit.HOURS))
                 .collect(Collectors.toList());
-    }
-
-    private List<Location> loadLocations() {
-        List<Location> locations = new ArrayList<>();
-        locations.add(new Location("Gran Canaria", 28.11, -15.43));
-        locations.add(new Location("Tenerife", 28.46, -16.25));
-        locations.add(new Location("La Gomera", 28.09, -17.1));
-        locations.add(new Location("La Palma", 28.68, -17.76));
-        locations.add(new Location("El Hierro", 27.64, -17.98));
-        locations.add(new Location("Fuerteventura", 28.49, -13.86));
-        locations.add(new Location("Lanzarote", 28.96, -13.55));
-        locations.add(new Location("La Graciosa", 29.23, -13.5));
-        return locations;
     }
 }

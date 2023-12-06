@@ -1,7 +1,5 @@
 package org.ulpgc.dacd.control;
 
-import java.util.List;
-
-public interface WeatherStore {
+public interface EventStoreBuilder {
     void save(String message);
 }
