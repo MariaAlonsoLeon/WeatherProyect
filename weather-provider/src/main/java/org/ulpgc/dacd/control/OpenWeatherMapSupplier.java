@@ -1,6 +1,9 @@
 package org.ulpgc.dacd.control;
 
-import com.google.gson.*;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import org.ulpgc.dacd.control.exceptions.WeatherDataException;
 import org.ulpgc.dacd.model.Location;
 import org.ulpgc.dacd.model.Weather;
 import org.jsoup.Jsoup;
@@ -8,7 +11,6 @@ import org.jsoup.nodes.Document;
 
 import java.io.IOException;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
@@ -33,7 +35,7 @@ public class OpenWeatherMapSupplier implements WeatherSupplier {
     }
 
     @Override
-    public List<Weather> getWeathers(Location location, List<Instant> instants) {
+    public List<Weather> getWeathers(Location location, List<Instant> instants) throws WeatherDataException {
         String url = buildUrl(location);
         System.out.println(url);
         return instants.stream()
@@ -41,7 +43,7 @@ public class OpenWeatherMapSupplier implements WeatherSupplier {
                     try {
                         String jsonWeather = getWeatherFromUrl(url);
                         return parseJsonDataToWeather(jsonWeather, location, instant);
-                    } catch (IOException e) {
+                    } catch (IOException | WeatherDataException e) {
                         handleException("Error fetching weather data", e);
                         return null;
                     }
@@ -51,7 +53,7 @@ public class OpenWeatherMapSupplier implements WeatherSupplier {
     }
 
     private String buildUrl(Location location) {
-        String coordinates = String.format("lat=%s&lon=%s", location.getLat(), location.getLon());
+        String coordinates = String.format("lat=%s&lon=%s", location.lat(), location.lon());
         return String.format("%s%s&appid=%s&units=metric", templateUrl, coordinates, apiKey);
     }
 
@@ -60,7 +62,7 @@ public class OpenWeatherMapSupplier implements WeatherSupplier {
         return document.text();
     }
 
-    private Weather parseJsonDataToWeather(String jsonData, Location location, Instant instant) {
+    private Weather parseJsonDataToWeather(String jsonData, Location location, Instant instant) throws WeatherDataException {
         try {
             JsonObject jsonObject = JsonParser.parseString(jsonData).getAsJsonObject();
             JsonArray list = jsonObject.getAsJsonArray(LIST_KEY);
@@ -72,7 +74,8 @@ public class OpenWeatherMapSupplier implements WeatherSupplier {
                 }
             }
         } catch (Exception e) {
-            handleException("Error parsing JSON", e);
+            // Capturar y lanzar la excepción personalizada si hay un problema al analizar los datos
+            throw new WeatherDataException("Error parsing JSON", e);
         }
         return null;
     }
@@ -91,17 +94,22 @@ public class OpenWeatherMapSupplier implements WeatherSupplier {
         return null;
     }
 
-    private Weather createWeatherFromForecastData(JsonObject forecastData, Location location, Instant instant) {
-        JsonObject main = forecastData.getAsJsonObject("main");
-        JsonObject cloud = forecastData.getAsJsonObject("clouds");
-        JsonObject wind = forecastData.getAsJsonObject("wind");
-        float temperature = main.get(TEMPERATURE_KEY).getAsFloat();
-        int humidity = main.get(HUMIDITY_KEY).getAsInt();
-        int clouds = cloud.get(CLOUDS_KEY).getAsInt();
-        float windSpeed = wind.get(WIND_SPEED_KEY).getAsFloat();
-        float rainProbability = forecastData.get(RAIN_PROBABILITY_KEY).getAsFloat();
+    private Weather createWeatherFromForecastData(JsonObject forecastData, Location location, Instant instant) throws WeatherDataException {
+        try {
+            JsonObject main = forecastData.getAsJsonObject("main");
+            JsonObject cloud = forecastData.getAsJsonObject("clouds");
+            JsonObject wind = forecastData.getAsJsonObject("wind");
+            float temperature = main.get(TEMPERATURE_KEY).getAsFloat();
+            int humidity = main.get(HUMIDITY_KEY).getAsInt();
+            int clouds = cloud.get(CLOUDS_KEY).getAsInt();
+            float windSpeed = wind.get(WIND_SPEED_KEY).getAsFloat();
+            float rainProbability = forecastData.get(RAIN_PROBABILITY_KEY).getAsFloat();
 
-        return new Weather("WeatherProvider/OpenWeatherMap", instant, location, temperature, humidity, clouds, windSpeed, rainProbability);
+            return new Weather("WeatherProvider/OpenWeatherMap", instant, location, temperature, humidity, clouds, windSpeed, rainProbability);
+        } catch (Exception e) {
+            // Capturar y lanzar la excepción personalizada si hay un problema al crear el objeto Weather
+            throw new WeatherDataException("Error creating Weather object", e);
+        }
     }
 
     private void handleException(String message, Exception e) {
