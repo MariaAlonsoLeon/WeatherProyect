@@ -4,8 +4,14 @@ import org.apache.activemq.ActiveMQConnectionFactory;
 import org.ulpgc.dacd.control.exceptions.EventReceiverException;
 
 import javax.jms.*;
+import java.util.logging.FileHandler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 
 public class TopicSubscriber implements Suscriber {
+
+    private static final Logger logger = Logger.getLogger(TopicSubscriber.class.getName());
 
     private Connection connection;
     private Session session;
@@ -22,6 +28,7 @@ public class TopicSubscriber implements Suscriber {
             initializeSession();
             initializeMessageListener();
         } catch (JMSException e) {
+            logger.log(Level.SEVERE, "Error creating listener", e);
             throw new EventReceiverException("Error creating listener", e);
         }
     }
@@ -30,9 +37,14 @@ public class TopicSubscriber implements Suscriber {
         String brokerUrl = "tcp://localhost:61616";
         String clientId = "EventStoreBuilder";
         ConnectionFactory connectionFactory = new ActiveMQConnectionFactory(brokerUrl);
-        connection = connectionFactory.createConnection();
-        connection.setClientID(clientId);
-        connection.start();
+        try {
+            connection = connectionFactory.createConnection();
+            connection.setClientID(clientId);
+            connection.start();
+        } catch (JMSException e) {
+            logger.log(Level.SEVERE, "Error initializing connection", e);
+            throw e;
+        }
     }
 
     private void initializeSession() throws JMSException {
@@ -44,7 +56,7 @@ public class TopicSubscriber implements Suscriber {
     private void initializeMessageListener() throws JMSException {
         String topicName = "prediction.Weather";
         Topic topic = session.createTopic(topicName);
-        MessageConsumer consumer = createDurableSubscriber(topic, "EventStoreBuilder-prediction.Weather");
+        MessageConsumer consumer = createDurableSubscriber(topic, "EventStoreBuilder" + topicName);
         consumer.setMessageListener(createMessageListener());
     }
 
@@ -66,7 +78,7 @@ public class TopicSubscriber implements Suscriber {
             try {
                 saveAndPrintMessage((TextMessage) message);
             } catch (JMSException e) {
-                e.printStackTrace();
+                logger.log(Level.SEVERE, "Error processing message", e);
             }
         }
     }
@@ -74,6 +86,6 @@ public class TopicSubscriber implements Suscriber {
     private void saveAndPrintMessage(TextMessage textMessage) throws JMSException {
         String receivedMessage = textMessage.getText();
         fileEventStoreBuilder.save(receivedMessage);
-        System.out.println("Received message '" + receivedMessage + "'");
+        logger.info("Received message: " + receivedMessage);
     }
 }

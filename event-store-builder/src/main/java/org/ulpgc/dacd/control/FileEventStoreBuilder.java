@@ -3,6 +3,7 @@ package org.ulpgc.dacd.control;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -10,11 +11,15 @@ import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.Date;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class FileEventStoreBuilder implements EventStoreBuilder {
 
     private static final String EVENTSTORE_DIRECTORY = "\\eventstore7\\prediction.Weather\\";
     private final String baseDirectory;
+
+    private static final Logger logger = Logger.getLogger(TopicSubscriber.class.getName());
 
     public FileEventStoreBuilder(String baseDirectory) {
         this.baseDirectory = baseDirectory;
@@ -39,10 +44,10 @@ public class FileEventStoreBuilder implements EventStoreBuilder {
     }
 
     private void writeEventToFile(String message, String filePath) {
-        try (FileWriter writer = new FileWriter(filePath, true)) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath, true))) {
             writer.write(message + "\n");
         } catch (IOException e) {
-            handleIOException(e);
+            logger.log(Level.SEVERE, "Failed to write event to file: " + filePath, e);
         }
     }
 
@@ -51,9 +56,9 @@ public class FileEventStoreBuilder implements EventStoreBuilder {
         File directory = new File(directoryPath);
         if (!directory.exists()) {
             if (directory.mkdirs()) {
-                System.out.println("Directory created: " + directoryPath);
+                logger.info("Directory created: " + directoryPath);
             } else {
-                System.err.println("Failed to create directory: " + directoryPath);
+                logger.warning("Failed to create directory: " + directoryPath);
             }
         }
     }
@@ -65,16 +70,8 @@ public class FileEventStoreBuilder implements EventStoreBuilder {
                 return jsonObject.get(key).getAsString();
             }
         } catch (Exception e) {
-            handleJsonParseException(e);
+            logger.log(Level.WARNING, "Failed to parse JSON: " + message, e);
         }
         return "";
-    }
-
-    private void handleJsonParseException(Exception e) {
-        e.printStackTrace();
-    }
-
-    private void handleIOException(IOException e) {
-        e.printStackTrace();
     }
 }
