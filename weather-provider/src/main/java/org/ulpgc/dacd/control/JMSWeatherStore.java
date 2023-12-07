@@ -6,9 +6,8 @@ import org.ulpgc.dacd.model.Weather;
 
 import javax.jms.*;
 import java.time.Instant;
-
-public class JMSWeatherStore implements TopicSender{
-    private static final String QUEUE_NAME = "prediction.Weather";
+public class JMSWeatherStore implements WeatherStore {
+    private static final String topicName = "prediction.Weather";
     private final String brokerURL;
 
     public JMSWeatherStore(String brokerURL) {
@@ -16,13 +15,12 @@ public class JMSWeatherStore implements TopicSender{
     }
 
     @Override
-    public void sendMessage(Weather weather) {
+    public void save(Weather weather) {
         try (Connection connection = createConnection()) {
             connection.setClientID("PredictionProvider");
             connection.start();
             Session session = createSession(connection);
             Topic topic = createTopic(session);
-
             String jsonMessage = weatherToJson(weather);
             sendMessageToTopic(session, topic, jsonMessage);
         } catch (JMSException e) {
@@ -31,7 +29,7 @@ public class JMSWeatherStore implements TopicSender{
     }
 
     private Connection createConnection() throws JMSException {
-        ConnectionFactory connectionFactory = new ActiveMQConnectionFactory(ActiveMQConnectionFactory.DEFAULT_BROKER_URL);
+        ConnectionFactory connectionFactory = new ActiveMQConnectionFactory(brokerURL);
         return connectionFactory.createConnection();
     }
 
@@ -40,7 +38,7 @@ public class JMSWeatherStore implements TopicSender{
     }
 
     private Topic createTopic(Session session) throws JMSException {
-        return session.createTopic(QUEUE_NAME);
+        return session.createTopic(topicName);
     }
 
     private void sendMessageToTopic(Session session, Topic topic, String jsonMessage) throws JMSException {
@@ -57,7 +55,6 @@ public class JMSWeatherStore implements TopicSender{
 
     private Gson prepareGson() {
         return new GsonBuilder()
-                .setPrettyPrinting()
                 .registerTypeAdapter(Instant.class, new InstantSerializer())
                 .create();
     }

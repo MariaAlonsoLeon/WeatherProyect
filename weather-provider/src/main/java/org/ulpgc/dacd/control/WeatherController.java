@@ -1,10 +1,8 @@
 package org.ulpgc.dacd.control;
 
-import org.ulpgc.dacd.control.exceptions.WeatherDataException;
 import org.ulpgc.dacd.model.Location;
 import org.ulpgc.dacd.model.Weather;
 
-import java.io.IOException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -24,9 +22,9 @@ public class WeatherController {
     private final WeatherSupplier weatherSupplier;
     private final JMSWeatherStore jmsWeatherStore;
 
-    public WeatherController(int days, List<Location> locations, WeatherSupplier weatherSupplier, JMSWeatherStore jmsWeatherStore) {
+    public WeatherController(int days, WeatherSupplier weatherSupplier, JMSWeatherStore jmsWeatherStore) {
         this.days = days;
-        this.locations = locations;
+        this.locations = loadLocations();
         this.weatherSupplier = weatherSupplier;
         this.jmsWeatherStore = jmsWeatherStore;
 
@@ -36,13 +34,14 @@ public class WeatherController {
 
     public void execute() {
         Instant currentTime = Instant.now();
-        List<Instant> forecastTimes = calculateForecastTimes(currentTime, days);
-        sendEvents(unifyWeatherLists(forecastTimes));
+        List<Weather> weathers = unifyWeatherLists(currentTime);
+        sendEvents(weathers);
         logger.info("Weather data update completed.");
     }
 
-    private List<Weather> unifyWeatherLists(List<Instant> forecastTimes) {
+    private List<Weather> unifyWeatherLists(Instant currentTime) {
         List<Weather> weathers = new ArrayList<>();
+        List<Instant> forecastTimes = calculateForecastTimes(currentTime, days);
         for (Location location : locations) {
             try {
                 weathers.addAll(processLocation(location, forecastTimes));
@@ -53,13 +52,15 @@ public class WeatherController {
         return weathers;
     }
 
-    private List<Weather> processLocation(Location location, List<Instant> forecastTimes) throws WeatherDataException {
-        return weatherSupplier.getWeathers(location, forecastTimes);
+    private List<Weather> processLocation(Location location, List<Instant> forecastTimes) {
+        return weatherSupplier.getWeathers(location).stream()
+                .filter(weather -> forecastTimes.contains(weather.getPredictionTime()))
+                .collect(Collectors.toList());
     }
 
     private void sendEvents(List<Weather> weathers) {
         for (Weather weather : weathers) {
-            jmsWeatherStore.sendMessage(weather);
+            jmsWeatherStore.save(weather);
         }
     }
 
@@ -68,4 +69,18 @@ public class WeatherController {
                 .mapToObj(i -> currentTime.plus(i + 1, ChronoUnit.DAYS).truncatedTo(ChronoUnit.DAYS).plus(12, ChronoUnit.HOURS))
                 .collect(Collectors.toList());
     }
+
+    private static List<Location> loadLocations() {
+        List<Location> locations = new ArrayList<>();
+        locations.add(new Location("Gran Canaria", 28.11, -15.43));
+        locations.add(new Location("Tenerife", 28.46, -16.25));
+        locations.add(new Location("La Gomera", 28.09, -17.1));
+        locations.add(new Location("La Palma", 28.68, -17.76));
+        locations.add(new Location("El Hierro", 27.64, -17.98));
+        locations.add(new Location("Fuerteventura", 28.49, -13.86));
+        locations.add(new Location("Lanzarote", 28.96, -13.55));
+        locations.add(new Location("La Graciosa", 29.23, -13.5));
+        return locations;
+    }
 }
+

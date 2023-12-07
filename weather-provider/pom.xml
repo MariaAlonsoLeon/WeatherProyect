@@ -53,7 +53,7 @@
                         <manifest>
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>.lib/</classpathPrefix>
-                            <mainClass>org.ulpgc.dacd.control.Main</mainClass> <!-- Reemplaza con tu clase principal -->
+                            <mainClass>org.ulpgc.dacd.control.Main</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
