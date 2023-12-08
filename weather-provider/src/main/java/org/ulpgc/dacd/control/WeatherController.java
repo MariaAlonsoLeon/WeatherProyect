@@ -3,7 +3,6 @@ package org.ulpgc.dacd.control;
 import org.ulpgc.dacd.control.exceptions.StoreException;
 import org.ulpgc.dacd.model.Location;
 import org.ulpgc.dacd.model.Weather;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;

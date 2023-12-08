@@ -2,7 +2,6 @@ package org.ulpgc.dacd.control;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -16,9 +15,8 @@ import java.util.logging.Logger;
 
 public class FileEventStoreBuilder implements EventStoreBuilder {
 
-    private static final String EVENTSTORE_DIRECTORY = "\\eventstore7\\prediction.Weather\\";
+    private static final String EVENTSTORE_DIRECTORY = "\\eventstore\\prediction.Weather\\";
     private final String baseDirectory;
-
     private static final Logger logger = Logger.getLogger(TopicSubscriber.class.getName());
 
     public FileEventStoreBuilder(String baseDirectory) {

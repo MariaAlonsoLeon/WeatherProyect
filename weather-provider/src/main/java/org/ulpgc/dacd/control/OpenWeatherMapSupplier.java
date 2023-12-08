@@ -7,7 +7,6 @@ import org.ulpgc.dacd.model.Location;
 import org.ulpgc.dacd.model.Weather;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-
 import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
@@ -22,7 +21,6 @@ public class OpenWeatherMapSupplier implements WeatherSupplier {
     private static final Logger logger = Logger.getLogger(OpenWeatherMapSupplier.class.getName());
     private static final String LIST_KEY = "list";
     private static final String TIMESTAMP_KEY = "dt";
-    private static final String HOUR_AT_12 = "12:00:00";
 
     public OpenWeatherMapSupplier(String apiKey, String templateUrl) {
         this.apiKey = apiKey;
@@ -70,21 +68,17 @@ public class OpenWeatherMapSupplier implements WeatherSupplier {
 
     private boolean isWeatherAt12(JsonObject weatherItem) {
         String hour = weatherItem.get("dt_txt").getAsString().substring(11, 19);
-        return hour.equals(HOUR_AT_12);
+        return hour.equals("12:00:00");
     }
 
     private Weather createWeatherFromForecastData(JsonObject forecastData, Location location) {
         try {
-            JsonObject main = forecastData.getAsJsonObject("main");
-            JsonObject cloud = forecastData.getAsJsonObject("clouds");
-            JsonObject wind = forecastData.getAsJsonObject("wind");
-            float temperature = main.get("temp").getAsFloat();
-            int humidity = main.get("humidity").getAsInt();
-            int clouds = cloud.get("all").getAsInt();
-            float windSpeed = wind.get("speed").getAsFloat();
-            float rainProbability = forecastData.get("pop").getAsFloat();
-
             Instant instant = Instant.ofEpochSecond(forecastData.get(TIMESTAMP_KEY).getAsLong());
+            int humidity = forecastData.getAsJsonObject("main").get("humidity").getAsInt();
+            float temperature = forecastData.getAsJsonObject("main").get("temp").getAsFloat();
+            int clouds = forecastData.getAsJsonObject("clouds").get("all").getAsInt();
+            float windSpeed = forecastData.getAsJsonObject("wind").get("speed").getAsFloat();
+            float rainProbability = forecastData.get("pop").getAsFloat();
             return new Weather("WeatherProvider/OpenWeatherMap", instant, location, temperature, humidity, clouds, windSpeed, rainProbability);
         } catch (Exception e) {
             handleException("Error creating Weather object", e);

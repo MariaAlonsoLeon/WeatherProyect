@@ -1,86 +1,84 @@
-# WeatherApp
-- **Subject:** Development of Applications for Data Science (DACD)
-- **Curse:** 2023-2024
-- **Degree:** Data Science and Engineering (GCID)
-- **School:** School of Computer Engineering (EII)
-- **University:**  University of Las Palmas de Gran Canaria (ULPGC)
+# Cover Page:
 
-## Functionality Summary
+- Subject: Data Science Application Development (DACD)
+- Academic Year: 2023-2024
+- Degree: Data Science and Engineering (GCID)
+- School: School of Computer Engineering (EII)
+- University: University of Las Palmas de Gran Canaria (ULPGC)
 
-The WeatherApp provides weather information for a location on each of the Canary Islands. It fetches data from the OpenWeatherMap API (an online service providing meteorological data) and stores the information locally in an SQLite database.
+# Main Functionality
 
-The application, when running, updates and inserts data from the API every 6 hours. After this update, it offers the possibility to check the weather forecast for several days, specifically 5 days after the current date. If the application already has a history, you can also check the recorded data from past days.
+The Weather application provides weather forecasts by integrating with the OpenWeatherMap API. It consists of two main modules: "weather-provider" and "event-store-builder." The first module collects the weather forecast every 6 hours for the next 5 days for the 8 Canary Islands and sends it to an active messaging system or broker (ActiveMQ). The second module, "event-store-builder," subscribes to weather events from the messaging system and stores them in local files, using the following directory structure: "eventstore/prediction.Weather/{ss}/{YYYYMMDD}.events." Here, "YYYYMMDD" is the year-month-day obtained from the event's timestamp, and ".event" is the file extension for storing events associated with a specific day.
 
-## Resources Used
-- **Development Environment:** IntelliJ IDEA.
-- **Version Control Tools:** Git, GitHub
+# How to Run the Program
 
-## Project Structure
+The program can be easily executed by following these steps:
 
-The project follows an organized structure with various packages that separate responsibilities and facilitate code maintainability. The project's package structure is described below:
+1. Download the latest version from the releases of this project. These already include all the necessary dependencies.
+2. Unzip the downloaded folders and place them in the desired location.
+3. Start the broker. To do this, you will need to download it from this link → [ActiveMQ (apache.org)](https://activemq.apache.org/)
+4. Run the 'event-store-builder' module. To do this, from the terminal, use 'cd' to navigate to the directory where the uncompressed folders are located. Use the 'java -jar' command and add the path where you want to store the directory structure as a program argument.
+5. Now, do the same with the 'weather-provider' module.
+6. In this case, the program argument will be the API key. Obtain your key from this link → [Members (openweathermap.org)](https://openweathermap.org/members)
 
-- `org.ulpgc.dacd.control`: Contains classes and interfaces related to application control:
-    - **Classes:**
-        - Main: The main class that starts the application. It configures and connects the main components.
-        - WeatherController: Responsible for coordinating the main logic of the application, such as updating meteorological data and interacting with the user.
-        - OpenWeatherMapSupplier: Retrieves real-time meteorological data from OpenWeatherMap.
-        - SQLiteWeatherStore: Manages local storage of meteorological data in an SQLite database.
-        - WeatherTask: A scheduled task that executes the logic of obtaining meteorological data according to a set schedule.
-    - **Interfaces:**
-        - WeatherStore: Defines methods for storing and retrieving meteorological data.
-        - WeatherSupplier: Defines methods for obtaining meteorological data from an external source.
+# Implementation
 
-- `org.ulpgc.dacd.model`: Defines the model classes used to represent meteorological information:
-    - **Classes:**
-        - Location: Represents location information, including the name of the island and its geographical coordinates.
-        - Weather:  Contains meteorological data for a specific location, such as temperature, humidity, and weather description.
+## Module "weather-provider"
 
-- `jdbc`: Directory that stores the SQLite database and its connection.
+### Control:
 
-## Design
+- **ActiveMQMessageSender (implements TopicSender):** Sends weather data to the broker.
+- **OpenWeatherMapSupplier (implements WeatherSupplier):** Obtains weather forecasts from OpenWeatherMap.
+- **WeatherController:** Controls the periodic retrieval and sending of weather data.
+- **Main:** Initiates the weather forecast application.
 
-### Design Patterns and Principles
+## Model:
 
-The application uses the Model-View-Controller (MVC) design pattern to achieve a modular and maintainable structure, taking into account principles such as modularity, cohesion, and low coupling. The separation of responsibilities facilitates extensibility and promotes a more robust and maintainable design over time.
+- **Location:** Represents a geographical location.
+- **Weather:** Represents meteorological data events.
 
-## Implementation Decisions
+## Module "event-store-builder"
 
-### Exception Handling
-Proper exception handling is implemented in various parts of the code, ensuring that errors are logged and handled correctly. This contributes to the system's robustness and facilitates the identification of potential issues.
+- **FileEventStoreBuilder (implements EventStoreBuilder):** Stores weather events in local files.
+- **TopicSubscriber (implements Subscriber):** Subscribes to weather events and stores them locally.
+- **Main:** Initiates the weather event subscription system.
 
-### Secure Data Extraction
-The use of the Jsoup library to extract HTML data from OpenWeatherMap is done safely and controlled, minimizing potential security threats.
+## Design and Principles
 
-### Use of Try-with-Resources
-In the handling of resources, such as JDBC connections, the try-with-resources statement is used, ensuring proper resource release and increasing code reliability.
+The application adheres to SOLID principles to ensure a robust and maintainable design. Below are specific SOLID principles applied in the implementation:
 
-### Use of float vs double
+### Single Responsibility Principle (SRP):
 
-Due to the higher precision of double but larger space occupation, it is only used for latitude and longitude, as the rest of the data provided by the API does not have many decimal places.
+Ensures that each class has a single responsibility. For example, the FileEventStoreBuilder class has the exclusive responsibility of saving weather events to local files. This way, if the storage process needs modification, only this class will be affected.
 
-### Use of Final Variables
+### Open/Closed Principle (OCP):
 
-Most variables are marked as final to ensure immutability and prevent unexpected changes in the state of objects. This choice contributes to the consistency and predictability of the code, promoting security and maintenance throughout the application's lifecycle.
+Indicates that existing code should only be modified to fix errors and not to add new functionalities. For instance, the weather provider interface allows introducing new information providers without modifying the WeatherController logic.
 
-### API Key Management as an Argument
+### Liskov Substitution Principle (LSP):
 
-The API Key is passed as an argument when running the application in IntelliJ IDEA to improve security and flexibility. It avoids the direct exposure of keys in the source code and facilitates configuration in different environments without modifying the code.
+Subclasses should be substitutable for their base classes without affecting functionality. For example, the OpenWeatherMapSupplier class is entirely substitutable for its base class WeatherSupplier, ensuring that any part of the system using WeatherSupplier works correctly with OpenWeatherMapSupplier.
 
-### Use of Logger
+### Interface Segregation Principle (ISP):
 
-The decision to use a logger to record information, warnings, and errors provides efficient traceability of the application's execution, facilitating the identification and resolution of potential issues.
+Interfaces should be designed without unnecessary methods, keeping them clean. Large interfaces should be divided into smaller ones. For example, the WeatherSupplier interface offers only the necessary functionality to obtain weather forecasts.
 
-## Class Diagram
+### Dependency Inversion Principle (DIP):
 
-For a better understanding of the project and its structure, it has been decided to add a class diagram. It is important to note that only the main attributes and methods of each class have been included to make it more readable.
+Dependencies are separated to avoid depending on low-level modules. Instead, both should depend on abstractions. For example, the WeatherController class depends on the WeatherSupplier and WeatherStore interfaces rather than their implementations.
 
-![PruebaUML1 (3)](https://github.com/MariaAlonsoLeon/Practice1/assets/145381435/8eda6e19-1fe7-47ba-bca0-0826f2d05d28)
+### Observer Pattern:
 
-### Dependency Relationships
+The Observer pattern is used to notify subscribers, in this case, the "event-store-builder" module, about new weather events. This decouples event generation and storage.
 
-- The `WeatherController` class depends on the `WeatherSupplier` and `WeatherStore` classes to obtain and store meteorological data.
-- The `OpenWeatherMapSupplier` class implements the `WeatherSupplier` interface and uses the Jsoup library to obtain data from OpenWeatherMap.
-- The `SQLiteWeatherStore` class implements the `WeatherStore` interface.
-- The `WeatherTask` class depends on WeatherController to execute the logic of obtaining meteorological data according to a set schedule, thus coordinating the scheduled task with the main logic of the application.
-- The `Main` class depends on `WeatherController` to start and coordinate the application flow, and on `WeatherTask` to perform the periodic task.
-- The `Weather` class has an attribute of the Location class to indicate the location.
+### Exception Handling:
+
+A consistent exception-handling system is implemented. In the "event-store-builder" module, custom exceptions like WeatherReceiverException are used to encapsulate specific errors for proper handling. No interface throws exceptions that are not custom, especially Runtime Exceptions.
+
+### Logger Usage:
+
+The use of a logger throughout the code improves visibility and exception handling. Exceptions are appropriately logged, aiding debugging and system monitoring in production.
+
+### Data Lake:
+
+The "event-store-builder" module stores weather events in a local file format organized as a "Data Lake." This approach allows for easy expansion and long-term data analysis.

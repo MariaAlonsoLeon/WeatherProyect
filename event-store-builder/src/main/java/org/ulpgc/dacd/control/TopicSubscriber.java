@@ -53,7 +53,7 @@ public class TopicSubscriber implements Suscriber {
             try {
                 String receivedMessage = ((TextMessage) message).getText();
                 fileEventStoreBuilder.save(receivedMessage);
-                logger.info("Received message: " + receivedMessage);
+                System.out.println("Received message: " + receivedMessage);
             } catch (JMSException e) {
                 logger.log(Level.SEVERE, "Error processing message", e);
             }
