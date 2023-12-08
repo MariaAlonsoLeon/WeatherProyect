@@ -12,7 +12,7 @@ public class Main {
             return;
         }
         String apiKey = args[0];
-        WeatherSupplier supplier = new OpenWeatherMapSupplier(apiKey);
+        WeatherSupplier supplier = new OpenWeatherMapSupplier(apiKey, "https://api.openweathermap.org/data/2.5/forecast?");
         JMSWeatherStore activeMQMessageSender = new JMSWeatherStore("tcp://localhost:61616");
         WeatherController weatherController = new WeatherController(days, supplier, activeMQMessageSender);
     }

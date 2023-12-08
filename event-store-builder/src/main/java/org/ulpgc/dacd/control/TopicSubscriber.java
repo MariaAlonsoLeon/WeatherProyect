@@ -4,18 +4,17 @@ import org.apache.activemq.ActiveMQConnectionFactory;
 import org.ulpgc.dacd.control.exceptions.EventReceiverException;
 
 import javax.jms.*;
-import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.logging.SimpleFormatter;
 
 public class TopicSubscriber implements Suscriber {
-
     private static final Logger logger = Logger.getLogger(TopicSubscriber.class.getName());
-
     private Connection connection;
     private Session session;
     private final EventStoreBuilder fileEventStoreBuilder;
+    private static final String brokerUrl = "tcp://localhost:61616";
+    private static final String topicName = "prediction.Weather";
+    private static final String clientID = "EventStoreBuilder";
 
     public TopicSubscriber(FileEventStoreBuilder fileEventStoreBuilder) {
         this.fileEventStoreBuilder = fileEventStoreBuilder;
@@ -28,18 +27,15 @@ public class TopicSubscriber implements Suscriber {
             initializeSession();
             initializeMessageListener();
         } catch (JMSException e) {
-            logger.log(Level.SEVERE, "Error creating listener", e);
             throw new EventReceiverException("Error creating listener", e);
         }
     }
 
     private void initializeConnection() throws JMSException {
-        String brokerUrl = "tcp://localhost:61616";
-        String clientId = "EventStoreBuilder";
         ConnectionFactory connectionFactory = new ActiveMQConnectionFactory(brokerUrl);
         try {
             connection = connectionFactory.createConnection();
-            connection.setClientID(clientId);
+            connection.setClientID(clientID);
             connection.start();
         } catch (JMSException e) {
             logger.log(Level.SEVERE, "Error initializing connection", e);
@@ -54,9 +50,8 @@ public class TopicSubscriber implements Suscriber {
     }
 
     private void initializeMessageListener() throws JMSException {
-        String topicName = "prediction.Weather";
         Topic topic = session.createTopic(topicName);
-        MessageConsumer consumer = createDurableSubscriber(topic, "EventStoreBuilder" + topicName);
+        MessageConsumer consumer = createDurableSubscriber(topic, clientID + topicName);
         consumer.setMessageListener(createMessageListener());
     }
 

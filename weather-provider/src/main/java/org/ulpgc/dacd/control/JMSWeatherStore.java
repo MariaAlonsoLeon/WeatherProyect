@@ -2,6 +2,7 @@ package org.ulpgc.dacd.control;
 
 import com.google.gson.*;
 import org.apache.activemq.ActiveMQConnectionFactory;
+import org.ulpgc.dacd.control.exceptions.StoreException;
 import org.ulpgc.dacd.model.Weather;
 
 import javax.jms.*;
@@ -15,7 +16,7 @@ public class JMSWeatherStore implements WeatherStore {
     }
 
     @Override
-    public void save(Weather weather) {
+    public void save(Weather weather) throws StoreException {
         try (Connection connection = createConnection()) {
             connection.setClientID("PredictionProvider");
             connection.start();
@@ -24,7 +25,7 @@ public class JMSWeatherStore implements WeatherStore {
             String jsonMessage = weatherToJson(weather);
             sendMessageToTopic(session, topic, jsonMessage);
         } catch (JMSException e) {
-            e.printStackTrace();
+            throw new StoreException(e.getMessage());
         }
     }
 

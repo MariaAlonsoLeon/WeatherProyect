@@ -18,13 +18,15 @@ import com.google.gson.JsonElement;
 
 public class OpenWeatherMapSupplier implements WeatherSupplier {
     private final String apiKey;
+    private final String templateUrl;
     private static final Logger logger = Logger.getLogger(OpenWeatherMapSupplier.class.getName());
     private static final String LIST_KEY = "list";
     private static final String TIMESTAMP_KEY = "dt";
     private static final String HOUR_AT_12 = "12:00:00";
 
-    public OpenWeatherMapSupplier(String apiKey) {
+    public OpenWeatherMapSupplier(String apiKey, String templateUrl) {
         this.apiKey = apiKey;
+        this.templateUrl = templateUrl;
     }
 
     @Override
@@ -34,8 +36,8 @@ public class OpenWeatherMapSupplier implements WeatherSupplier {
     }
 
     private String buildUrl(Location location) {
-        return String.format("https://api.openweathermap.org/data/2.5/forecast?lat=%s&lon=%s&units=metric&appid=%s",
-                location.lat(), location.lon(), apiKey);
+        String coordinates = String.format("lat=%s&lon=%s", location.lat(), location.lon());
+        return String.format("%s%s&appid=%s&units=metric", templateUrl, coordinates, apiKey);
     }
 
     private List<Weather> parseWeatherData(String url, Location location) {

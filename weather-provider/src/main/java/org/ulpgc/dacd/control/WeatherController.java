@@ -1,5 +1,6 @@
 package org.ulpgc.dacd.control;
 
+import org.ulpgc.dacd.control.exceptions.StoreException;
 import org.ulpgc.dacd.model.Location;
 import org.ulpgc.dacd.model.Weather;
 
@@ -59,9 +60,14 @@ public class WeatherController {
     }
 
     private void sendEvents(List<Weather> weathers) {
-        for (Weather weather : weathers) {
-            jmsWeatherStore.save(weather);
+        try{
+            for (Weather weather : weathers) {
+                jmsWeatherStore.save(weather);
+            }
+        } catch (StoreException e){
+            logger.log(Level.SEVERE, "Error sending events: " + e.getMessage(), e);
         }
+
     }
 
     private List<Instant> calculateForecastTimes(Instant currentTime, int days) {
