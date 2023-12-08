@@ -33,54 +33,30 @@ public class TopicSubscriber implements Suscriber {
 
     private void initializeConnection() throws JMSException {
         ConnectionFactory connectionFactory = new ActiveMQConnectionFactory(brokerUrl);
-        try {
-            connection = connectionFactory.createConnection();
-            connection.setClientID(clientID);
-            connection.start();
-        } catch (JMSException e) {
-            logger.log(Level.SEVERE, "Error initializing connection", e);
-            throw e;
-        }
+        connection = connectionFactory.createConnection();
+        connection.setClientID(clientID);
+        connection.start();
     }
 
     private void initializeSession() throws JMSException {
-        boolean transacted = false;
-        int acknowledgeMode = Session.AUTO_ACKNOWLEDGE;
-        session = connection.createSession(transacted, acknowledgeMode);
+        session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
     }
 
     private void initializeMessageListener() throws JMSException {
         Topic topic = session.createTopic(topicName);
-        MessageConsumer consumer = createDurableSubscriber(topic, clientID + topicName);
-        consumer.setMessageListener(createMessageListener());
-    }
-
-    private MessageConsumer createDurableSubscriber(Topic topic, String subscriptionName) throws JMSException {
-        return session.createDurableSubscriber(topic, subscriptionName);
-    }
-
-    private MessageListener createMessageListener() {
-        return new MessageListener() {
-            @Override
-            public void onMessage(Message message) {
-                processMessage(message);
-            }
-        };
+        MessageConsumer consumer = session.createDurableSubscriber(topic, clientID + topicName);
+        consumer.setMessageListener(this::processMessage);
     }
 
     private void processMessage(Message message) {
         if (message instanceof TextMessage) {
             try {
-                saveAndPrintMessage((TextMessage) message);
+                String receivedMessage = ((TextMessage) message).getText();
+                fileEventStoreBuilder.save(receivedMessage);
+                logger.info("Received message: " + receivedMessage);
             } catch (JMSException e) {
                 logger.log(Level.SEVERE, "Error processing message", e);
             }
         }
-    }
-
-    private void saveAndPrintMessage(TextMessage textMessage) throws JMSException {
-        String receivedMessage = textMessage.getText();
-        fileEventStoreBuilder.save(receivedMessage);
-        logger.info("Received message: " + receivedMessage);
     }
 }
