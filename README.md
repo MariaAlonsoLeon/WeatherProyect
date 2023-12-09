@@ -1,14 +1,18 @@
 # Cover Page:
 
-- Subject: Data Science Application Development (DACD)
-- Academic Year: 2023-2024
-- Degree: Data Science and Engineering (GCID)
-- School: School of Computer Engineering (EII)
-- University: University of Las Palmas de Gran Canaria (ULPGC)
+- **Subject:** Data Science Application Development (DACD)
+- **Academic Year:** 2023-2024
+- **Degree:** Data Science and Engineering (GCID)
+- **School:** School of Computer Engineering (EII)
+- **University:** University of Las Palmas de Gran Canaria (ULPGC)
 
 # Main Functionality
 
 The Weather application provides weather forecasts by integrating with the OpenWeatherMap API. It consists of two main modules: "weather-provider" and "event-store-builder." The first module collects the weather forecast every 6 hours for the next 5 days for the 8 Canary Islands and sends it to an active messaging system or broker (ActiveMQ). The second module, "event-store-builder," subscribes to weather events from the messaging system and stores them in local files, using the following directory structure: "eventstore/prediction.Weather/{ss}/{YYYYMMDD}.events." Here, ss is the data source, "YYYYMMDD" is the date of the event, and ".event" is the file extension for storing events associated with a specific day.
+
+# Resources Used
+- **Development Environment:** IntelliJ IDEA.
+- **Version Control Tools:** Git, GitHub
 
 # How to Run the Program
 
@@ -17,7 +21,7 @@ The program can be easily executed by following these steps:
 1. Download the latest version from the releases of this project. These already include all the necessary dependencies.
 2. Unzip the downloaded folders and place them in the desired location.
 3. Start the broker. To do this, you will need to download it from this link → [ActiveMQ (apache.org)](https://activemq.apache.org/)
-4. Run the 'event-store-builder' module. To do this, from the terminal, use 'cd' to navigate to the directory where the uncompressed folders are located. Use the 'java -jar' command and add the path where you want to store the directory structure as a program argument.
+4. Run the 'event-store-builder' module. To do this, from the terminal, use 'cd' to navigate to the directory where the uncompressed folders are located. Use the 'java --jar' command and add the path where you want to store the directory structure as a program argument.
 5. Now, do the same with the 'weather-provider' module.
 6. In this case, the program argument will be the API key. Obtain your key from this link → [Members (openweathermap.org)](https://openweathermap.org/members)
 
