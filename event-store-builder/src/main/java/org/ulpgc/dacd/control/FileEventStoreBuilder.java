@@ -43,6 +43,7 @@ public class FileEventStoreBuilder implements EventStoreBuilder {
 
     private void writeEventToFile(String message, String filePath) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath, true))) {
+            System.out.println(message);
             writer.write(message);
             writer.newLine();
         } catch (IOException e) {

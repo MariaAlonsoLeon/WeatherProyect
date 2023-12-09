@@ -31,7 +31,7 @@ public class WeatherController {
                 logger.info("Weather data update completed.");
             }
         };
-        timer.schedule(task, 0, 1 * 60 * 1000);
+        timer.schedule(task, 0, 6 * 60 * 60 * 1000);
     }
 
     private void fetchAndStoreWeather() {
