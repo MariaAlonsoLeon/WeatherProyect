@@ -74,7 +74,7 @@ public class OpenWeatherMapSupplier implements WeatherSupplier {
             int clouds = forecastData.getAsJsonObject("clouds").get("all").getAsInt();
             float windSpeed = forecastData.getAsJsonObject("wind").get("speed").getAsFloat();
             float rainProbability = forecastData.get("pop").getAsFloat();
-            return new Weather("WeatherProvider/OpenWeatherMap", instant, location, temperature, humidity, clouds, windSpeed, rainProbability);
+            return new Weather(instant, location, temperature, humidity, clouds, windSpeed, rainProbability);
         } catch (Exception e) {
             handleException("Error creating Weather object", e);
             return null;

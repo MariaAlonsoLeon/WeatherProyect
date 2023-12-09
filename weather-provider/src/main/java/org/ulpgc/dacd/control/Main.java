@@ -16,5 +16,4 @@ public class Main {
         WeatherController weatherController = new WeatherController(weatherSupplier, weatherStore);
         weatherController.execute();
     }
-
 }

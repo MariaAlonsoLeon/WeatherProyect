@@ -8,11 +8,11 @@ import javax.jms.*;
 import java.time.Instant;
 public class JMSWeatherStore implements WeatherStore {
     private final String topicName;
-    private final String brokerURL;
+    private final String brokerUrl;
     private final String clientId;
 
-    public JMSWeatherStore(String brokerURL, String topicName, String clientId) {
-        this.brokerURL = brokerURL;
+    public JMSWeatherStore(String brokerUrl, String topicName, String clientId) {
+        this.brokerUrl = brokerUrl;
         this.topicName = topicName;
         this.clientId = clientId;
     }
@@ -32,7 +32,7 @@ public class JMSWeatherStore implements WeatherStore {
     }
 
     private Connection createConnection() throws JMSException {
-        ConnectionFactory connectionFactory = new ActiveMQConnectionFactory(brokerURL);
+        ConnectionFactory connectionFactory = new ActiveMQConnectionFactory(brokerUrl);
         return connectionFactory.createConnection();
     }
 
