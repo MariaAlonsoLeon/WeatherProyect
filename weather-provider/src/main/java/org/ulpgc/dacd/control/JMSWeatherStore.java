@@ -4,21 +4,23 @@ import com.google.gson.*;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.ulpgc.dacd.control.exceptions.StoreException;
 import org.ulpgc.dacd.model.Weather;
-
 import javax.jms.*;
 import java.time.Instant;
 public class JMSWeatherStore implements WeatherStore {
-    private static final String topicName = "prediction.Weather";
+    private final String topicName;
     private final String brokerURL;
+    private final String clientId;
 
-    public JMSWeatherStore(String brokerURL) {
+    public JMSWeatherStore(String brokerURL, String topicName, String clientId) {
         this.brokerURL = brokerURL;
+        this.topicName = topicName;
+        this.clientId = clientId;
     }
 
     @Override
     public void save(Weather weather) throws StoreException {
         try (Connection connection = createConnection()) {
-            connection.setClientID("PredictionProvider");
+            connection.setClientID(clientId);
             connection.start();
             Session session = createSession(connection);
             Topic topic = createTopic(session);
@@ -35,11 +37,19 @@ public class JMSWeatherStore implements WeatherStore {
     }
 
     private Session createSession(Connection connection) throws JMSException {
-        return connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+        try {
+            return connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+        } catch (JMSException e) {
+            throw new JMSException("Error creating JMS session: " + e.getMessage());
+        }
     }
 
     private Topic createTopic(Session session) throws JMSException {
-        return session.createTopic(topicName);
+        try {
+            return session.createTopic(topicName);
+        } catch (JMSException e) {
+            throw new JMSException("Error creating JMS topic: " + e.getMessage());
+        }
     }
 
     private void sendMessageToTopic(Session session, Topic topic, String jsonMessage) throws JMSException {

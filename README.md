@@ -8,7 +8,7 @@
 
 # Main Functionality
 
-The Weather application provides weather forecasts by integrating with the OpenWeatherMap API. It consists of two main modules: "weather-provider" and "event-store-builder." The first module collects the weather forecast every 6 hours for the next 5 days for the 8 Canary Islands and sends it to an active messaging system or broker (ActiveMQ). The second module, "event-store-builder," subscribes to weather events from the messaging system and stores them in local files, using the following directory structure: "eventstore/prediction.Weather/{ss}/{YYYYMMDD}.events." Here, "YYYYMMDD" is the year-month-day obtained from the event's timestamp, and ".event" is the file extension for storing events associated with a specific day.
+The Weather application provides weather forecasts by integrating with the OpenWeatherMap API. It consists of two main modules: "weather-provider" and "event-store-builder." The first module collects the weather forecast every 6 hours for the next 5 days for the 8 Canary Islands and sends it to an active messaging system or broker (ActiveMQ). The second module, "event-store-builder," subscribes to weather events from the messaging system and stores them in local files, using the following directory structure: "eventstore/prediction.Weather/{ss}/{YYYYMMDD}.events." Here, ss is the data source, "YYYYMMDD" is the date of the event, and ".event" is the file extension for storing events associated with a specific day.
 
 # How to Run the Program
 
@@ -32,7 +32,7 @@ The program can be easily executed by following these steps:
 - **WeatherController:** Controls the periodic retrieval and sending of weather data.
 - **Main:** Initiates the weather forecast application.
 
-## Model:
+### Model:
 
 - **Location:** Represents a geographical location.
 - **Weather:** Represents meteorological data events.

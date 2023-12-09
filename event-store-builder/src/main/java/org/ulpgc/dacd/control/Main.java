@@ -14,12 +14,12 @@ public class Main {
             return;
         }
         String baseDirectory = args[0];
-        FileEventStoreBuilder fileEventStoreBuilder = new FileEventStoreBuilder(baseDirectory);
-        TopicSubscriber topicSubscriber = new TopicSubscriber(fileEventStoreBuilder);
+        EventStoreBuilder eventStoreBuilder = new FileEventStoreBuilder(baseDirectory);
+        Subscriber subscriber = new TopicSubscriber("tcp://localhost:61616", "prediction.Weather", "EventStoreBuilder",  eventStoreBuilder);
         ExecutorService executorService = Executors.newSingleThreadExecutor();
         executorService.submit(() -> {
             try {
-                topicSubscriber.start();
+                subscriber.start();
             } catch (EventReceiverException e) {
                 logger.log(Level.SEVERE, "Error starting TopicSubscriber", e);
             }

@@ -27,7 +27,7 @@ public class FileEventStoreBuilder implements EventStoreBuilder {
     public void save(String message) {
         String ss = getJsonValue(message, "ss");
         String dateString = getDateString(message);
-        createDirectoryIfNotExists(ss);
+        createDirectory(ss);
         String filePath = buildFilePath(ss, dateString);
         writeEventToFile(message, filePath);
     }
@@ -49,7 +49,7 @@ public class FileEventStoreBuilder implements EventStoreBuilder {
         }
     }
 
-    private void createDirectoryIfNotExists(String ss) {
+    private void createDirectory(String ss) {
         String directoryPath = Paths.get(baseDirectory, EVENTSTORE_DIRECTORY, ss).toString();
         File directory = new File(directoryPath);
         if (!directory.exists()) {
@@ -62,14 +62,7 @@ public class FileEventStoreBuilder implements EventStoreBuilder {
     }
 
     private String getJsonValue(String message, String key) {
-        try {
-            JsonObject jsonObject = JsonParser.parseString(message).getAsJsonObject();
-            if (jsonObject.has(key)) {
-                return jsonObject.get(key).getAsString();
-            }
-        } catch (Exception e) {
-            logger.log(Level.WARNING, "Failed to parse JSON: " + message, e);
-        }
-        return "";
+        JsonObject jsonObject = JsonParser.parseString(message).getAsJsonObject();
+        return jsonObject.get(key).getAsString();
     }
 }

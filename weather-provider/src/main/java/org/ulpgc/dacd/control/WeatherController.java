@@ -14,12 +14,12 @@ public class WeatherController {
     private static final Logger logger = Logger.getLogger(WeatherController.class.getName());
     private final List<Location> locations;
     private final WeatherSupplier weatherSupplier;
-    private final JMSWeatherStore jmsWeatherStore;
+    private final WeatherStore weatherStore;
 
-    public WeatherController(WeatherSupplier weatherSupplier, JMSWeatherStore jmsWeatherStore) {
+    public WeatherController(WeatherSupplier weatherSupplier, WeatherStore weatherStore) {
         this.locations = loadLocations();
         this.weatherSupplier = weatherSupplier;
-        this.jmsWeatherStore = jmsWeatherStore;
+        this.weatherStore = weatherStore;
     }
 
     public void execute() {
@@ -27,33 +27,21 @@ public class WeatherController {
         TimerTask task = new TimerTask() {
             @Override
             public void run() {
-                List<Weather> weathers = unifyWeatherLists();
-                sendEvents(weathers);
+                fetchAndStoreWeather();
                 logger.info("Weather data update completed.");
             }
         };
         timer.schedule(task, 0, 1 * 60 * 1000);
     }
 
-    private List<Weather> unifyWeatherLists() {
-        List<Weather> weathers = new ArrayList<>();
-        for (Location location : locations) {
-            try {
-                weathers.addAll(weatherSupplier.getWeathers(location));
-            } catch (Exception e) {
-                logger.log(Level.SEVERE, "Error processing location: " + e.getMessage(), e);
+    private void fetchAndStoreWeather() {
+        try{
+            for (Location location : locations) {
+                for (Weather weather : weatherSupplier.getWeathers(location)) {
+                    weatherStore.save(weather);
+                }
             }
-        }
-        System.out.println(weathers);
-        return weathers;
-    }
-
-    private void sendEvents(List<Weather> weathers) {
-        try {
-            for (Weather weather : weathers) {
-                jmsWeatherStore.save(weather);
-            }
-        } catch (StoreException e) {
+        } catch (StoreException e){
             logger.log(Level.SEVERE, "Error sending events: " + e.getMessage(), e);
         }
     }

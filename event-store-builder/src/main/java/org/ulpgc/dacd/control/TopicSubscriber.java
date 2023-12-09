@@ -2,22 +2,24 @@ package org.ulpgc.dacd.control;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.ulpgc.dacd.control.exceptions.EventReceiverException;
-
 import javax.jms.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class TopicSubscriber implements Suscriber {
+public class TopicSubscriber implements Subscriber {
     private static final Logger logger = Logger.getLogger(TopicSubscriber.class.getName());
     private Connection connection;
     private Session session;
-    private final EventStoreBuilder fileEventStoreBuilder;
-    private static final String brokerUrl = "tcp://localhost:61616";
-    private static final String topicName = "prediction.Weather";
-    private static final String clientID = "EventStoreBuilder";
+    private final EventStoreBuilder eventStore;
+    private final String brokerUrl;
+    private final String topicName;
+    private final String clientID;
 
-    public TopicSubscriber(FileEventStoreBuilder fileEventStoreBuilder) {
-        this.fileEventStoreBuilder = fileEventStoreBuilder;
+    public TopicSubscriber(String brokerUrl, String topicName, String clientID, EventStoreBuilder eventStore) {
+        this.brokerUrl = brokerUrl;
+        this.topicName = topicName;
+        this.clientID = clientID;
+        this.eventStore = eventStore;
     }
 
     @Override
@@ -52,7 +54,7 @@ public class TopicSubscriber implements Suscriber {
         if (message instanceof TextMessage) {
             try {
                 String receivedMessage = ((TextMessage) message).getText();
-                fileEventStoreBuilder.save(receivedMessage);
+                eventStore.save(receivedMessage);
                 System.out.println("Received message: " + receivedMessage);
             } catch (JMSException e) {
                 logger.log(Level.SEVERE, "Error processing message", e);

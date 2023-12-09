@@ -19,8 +19,6 @@ public class OpenWeatherMapSupplier implements WeatherSupplier {
     private final String apiKey;
     private final String templateUrl;
     private static final Logger logger = Logger.getLogger(OpenWeatherMapSupplier.class.getName());
-    private static final String LIST_KEY = "list";
-    private static final String TIMESTAMP_KEY = "dt";
 
     public OpenWeatherMapSupplier(String apiKey, String templateUrl) {
         this.apiKey = apiKey;
@@ -42,7 +40,7 @@ public class OpenWeatherMapSupplier implements WeatherSupplier {
         try {
             String jsonWeather = getWeatherFromUrl(url);
             JsonObject jsonObject = JsonParser.parseString(jsonWeather).getAsJsonObject();
-            JsonArray list = jsonObject.getAsJsonArray(LIST_KEY);
+            JsonArray list = jsonObject.getAsJsonArray("list");
             return list != null ? findMatchingWeatherItems(list, location) : new ArrayList<>();
         } catch (IOException e) {
             handleException("Error fetching or parsing weather data", e);
@@ -53,13 +51,10 @@ public class OpenWeatherMapSupplier implements WeatherSupplier {
     private List<Weather> findMatchingWeatherItems(JsonArray list, Location location) {
         List<Weather> matchingWeatherItems = new ArrayList<>();
         for (JsonElement element : list) {
-            if (element.isJsonObject()) {
-                JsonObject weatherItem = element.getAsJsonObject();
-                if (isWeatherAt12(weatherItem)) {
-                    Weather weather = createWeatherFromForecastData(weatherItem, location);
-                    if (weather != null) {
-                        matchingWeatherItems.add(weather);
-                    }
+            if (element.isJsonObject() && isWeatherAt12(element.getAsJsonObject())) {
+                Weather weather = createWeatherFromForecastData(element.getAsJsonObject(), location);
+                if (weather != null) {
+                    matchingWeatherItems.add(weather);
                 }
             }
         }
@@ -73,7 +68,7 @@ public class OpenWeatherMapSupplier implements WeatherSupplier {
 
     private Weather createWeatherFromForecastData(JsonObject forecastData, Location location) {
         try {
-            Instant instant = Instant.ofEpochSecond(forecastData.get(TIMESTAMP_KEY).getAsLong());
+            Instant instant = Instant.ofEpochSecond(forecastData.get("dt").getAsLong());
             int humidity = forecastData.getAsJsonObject("main").get("humidity").getAsInt();
             float temperature = forecastData.getAsJsonObject("main").get("temp").getAsFloat();
             int clouds = forecastData.getAsJsonObject("clouds").get("all").getAsInt();

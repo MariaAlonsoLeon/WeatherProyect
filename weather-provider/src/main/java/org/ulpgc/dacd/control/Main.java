@@ -11,9 +11,9 @@ public class Main {
             return;
         }
         String apiKey = args[0];
-        WeatherSupplier supplier = new OpenWeatherMapSupplier(apiKey, "https://api.openweathermap.org/data/2.5/forecast?");
-        JMSWeatherStore activeMQMessageSender = new JMSWeatherStore("tcp://localhost:61616");
-        WeatherController weatherController = new WeatherController(supplier, activeMQMessageSender);
+        WeatherSupplier weatherSupplier = new OpenWeatherMapSupplier(apiKey, "https://api.openweathermap.org/data/2.5/forecast?");
+        WeatherStore weatherStore = new JMSWeatherStore("tcp://localhost:61616", "prediction.Weather", "PredictionProvider");
+        WeatherController weatherController = new WeatherController(weatherSupplier, weatherStore);
         weatherController.execute();
     }
 
