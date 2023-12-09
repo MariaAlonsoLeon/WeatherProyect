@@ -1,62 +1,52 @@
 package org.ulpgc.dacd.control;
 
+import org.ulpgc.dacd.control.exceptions.StoreException;
 import org.ulpgc.dacd.model.Location;
 import org.ulpgc.dacd.model.Weather;
-import java.io.IOException;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 public class WeatherController {
     private static final Logger logger = Logger.getLogger(WeatherController.class.getName());
     private final List<Location> locations;
-    private final int days;
     private final WeatherSupplier weatherSupplier;
     private final WeatherStore weatherStore;
 
-    public WeatherController(int days, WeatherSupplier weatherSupplier, WeatherStore weatherStore) {
-        this.days = days;
+    public WeatherController(WeatherSupplier weatherSupplier, WeatherStore weatherStore) {
+        this.locations = loadLocations();
         this.weatherSupplier = weatherSupplier;
         this.weatherStore = weatherStore;
-        this.locations = loadLocations();
     }
 
-    public void execute() throws IOException {
-        Instant currentTime = Instant.now();
-        List<Instant> forecastTimes = calculateForecastTimes(currentTime, days);
-        for (Location location : locations) {
-            try {
-                processLocation(location, forecastTimes);
-            } catch (Exception e) {
-                logger.log(Level.SEVERE, "Error processing location: " + e.getMessage(), e);
+    public void execute() {
+        Timer timer = new Timer();
+        TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+                fetchAndStoreWeather();
+                logger.info("Weather data update completed.");
             }
-        }
-        logger.info("Weather data update completed.");
+        };
+        timer.schedule(task, 0, 6 * 60 * 60 * 1000);
     }
 
-    private void processLocation(Location location, List<Instant> forecastTimes) {
-        try {
-            List<Weather> weathers = weatherSupplier.getWeathers(location, forecastTimes);
-            if (weathers != null && !weathers.isEmpty()) {
-                weatherStore.save(weathers);
+    private void fetchAndStoreWeather() {
+        try{
+            for (Location location : locations) {
+                for (Weather weather : weatherSupplier.getWeathers(location)) {
+                    weatherStore.save(weather);
+                }
             }
-        } catch (IOException e) {
-            logger.log(Level.SEVERE, "Error getting weather for location " + location.getName(), e);
+        } catch (StoreException e){
+            logger.log(Level.SEVERE, "Error sending events: " + e.getMessage(), e);
         }
     }
 
-    private List<Instant> calculateForecastTimes(Instant currentTime, int days) {
-        return IntStream.range(0, days)
-                .mapToObj(i -> currentTime.plus(i + 1, ChronoUnit.DAYS).truncatedTo(ChronoUnit.DAYS).plus(12, ChronoUnit.HOURS))
-                .collect(Collectors.toList());
-    }
-
-    private List<Location> loadLocations() {
+    private static List<Location> loadLocations() {
         List<Location> locations = new ArrayList<>();
         locations.add(new Location("Gran Canaria", 28.11, -15.43));
         locations.add(new Location("Tenerife", 28.46, -16.25));
