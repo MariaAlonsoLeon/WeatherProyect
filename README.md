@@ -41,11 +41,15 @@ The program can be easily executed by following these steps:
 - **Location:** Represents a geographical location.
 - **Weather:** Represents meteorological data events.
 
+![DiagramModulePredictionProvider](https://github.com/MariaAlonsoLeon/Practice1/assets/145381435/b2bb4025-eded-42b9-83ce-b95e8bb84736)
+
 ## Module "event-store-builder"
 
 - **FileEventStoreBuilder (implements EventStoreBuilder):** Stores weather events in local files.
 - **TopicSubscriber (implements Subscriber):** Subscribes to weather events and stores them locally.
 - **Main:** Initiates the weather event subscription system.
+
+![DiagramModuleEventStoreBuilder](https://github.com/MariaAlonsoLeon/Practice1/assets/145381435/b50596c8-3c51-4f00-83b3-446a86a948a4)
 
 ## Design and Principles
 
