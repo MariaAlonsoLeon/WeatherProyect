@@ -51,7 +51,7 @@
                     </descriptorRefs>
                     <archive>
                         <manifest>
-                            <mainClass>com.tu.paquete.MainClass</mainClass>
+                            <mainClass>org.ulpgc.dacd.control.Main</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
