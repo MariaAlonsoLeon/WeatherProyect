@@ -22,8 +22,7 @@ The program can be easily executed by following these steps:
 2. Unzip the downloaded folders and place them in the desired location.
 3. Start the broker. To do this, you will need to download it from this link → [ActiveMQ (apache.org)](https://activemq.apache.org/)
 4. Run the 'event-store-builder' module. To do this, from the terminal, use 'cd' to navigate to the directory where the uncompressed folders are located. Use the 'java --jar' command and add the path where you want to store the directory structure as a program argument.
-5. Now, do the same with the 'weather-provider' module. In this case, the program argument will be the API key. Obtain your key from this link → [Members (openweathermap.org)]([https://openweathermap.org/members](https://home.openweathermap.org/users/sign_in))
-
+5. Now, do the same with the 'weather-provider' module. In this case, the program argument will be the API key. Obtain your key from this link → [OpenWeatherMap](https://home.openweathermap.org/users/sign_in)
 # Implementation
 
 ## Module "weather-provider"
