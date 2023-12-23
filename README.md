@@ -49,7 +49,7 @@ This module follows the Model-View-Controller (MVC) design pattern.
 - **TopicSubscriber (implements Subscriber):** Subscribes to weather events and stores them locally.
 - **Main:** Initiates the weather event subscription system.
 
-![DiagramModuleEventStoreBuilder](https://github.com/MariaAlonsoLeon/Practice1/assets/145381435/b50596c8-3c51-4f00-83b3-446a86a948a4)
+![DiagramModuleEventStoreBuilder](https://github.com/MariaAlonsoLeon/WeatherProyect/assets/145381435/7ccad1cd-f776-4613-8cd7-d71f654c1542)
 
 ## Design and Principles
 
