@@ -47,6 +47,7 @@ public class TopicSubscriber implements Subscriber {
     private void initializeMessageListener() throws JMSException {
         Topic topic = session.createTopic(topicName);
         MessageConsumer consumer = session.createDurableSubscriber(topic, clientID + topicName);
+        //Aqui deberá haber otro consumidor durable.
         consumer.setMessageListener(this::processMessage);
     }
 

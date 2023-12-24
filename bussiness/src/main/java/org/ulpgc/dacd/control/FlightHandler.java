@@ -1,29 +1,42 @@
 package org.ulpgc.dacd.control;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
+
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.ulpgc.dacd.model.Flight;
-import org.ulpgc.dacd.model.Model;
-import org.ulpgc.dacd.model.Weather;
-
-import java.time.Instant;
-
-import com.google.gson.Gson;
 
 public class FlightHandler implements Handler {
-    private final Gson gson = new Gson();
+    private List<Consumer<String>> subscribers = new ArrayList<>();
 
     @Override
     public void handleEvent(String message) {
-        Flight flight = extractFlightInfo(message);
-        System.out.println("Handling flight event: " + flight);
+        // Process flight event
+        JsonObject flightEventJson = JsonParser.parseString(message).getAsJsonObject();
+
+        // Extract relevant information from the flight event JSON
+        String flightId = flightEventJson.get("flightId").getAsString();
+        String departureAirport = flightEventJson.get("departureAirport").getAsString();
+        String arrivalAirport = flightEventJson.get("arrivalAirport").getAsString();
+        double price = flightEventJson.get("price").getAsDouble();
+
+        // TODO change the example for a real process
+        System.out.println("Flight Event Processed: FlightId - " + flightId +
+                ", Departure - " + departureAirport + ", Arrival - " + arrivalAirport +
+                ", Price - " + price);
+
+        // Notify subscribers with the processed information
+        notifySubscribers("Flight ID: " + flightId +
+                ", Departure: " + departureAirport + ", Arrival: " + arrivalAirport +
+                ", Price: " + price);
     }
 
-    private Flight extractFlightInfo(String message) {
-        JsonObject jsonObject = JsonParser.parseString(message).getAsJsonObject();
-        Instant departureAirport = Instant.parse(jsonObject.get("departureTime").getAsString());
-        String airline = jsonObject.get("airline").getAsString();
+    public void subscribe(Consumer<String> subscriber) {
+        subscribers.add(subscriber);
+    }
 
-        return new Flight(departureAirport, airline);
+    private void notifySubscribers(String message) {
+        subscribers.forEach(subscriber -> subscriber.accept(message));
     }
 }
