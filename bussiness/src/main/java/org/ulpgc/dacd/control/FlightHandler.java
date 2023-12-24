@@ -22,9 +22,6 @@ public class FlightHandler implements Handler {
         double price = flightEventJson.get("price").getAsDouble();
 
         // TODO change the example for a real process
-        System.out.println("Flight Event Processed: FlightId - " + flightId +
-                ", Departure - " + departureAirport + ", Arrival - " + arrivalAirport +
-                ", Price - " + price);
 
         // Notify subscribers with the processed information
         notifySubscribers("Flight ID: " + flightId +

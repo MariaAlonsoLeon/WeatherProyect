@@ -21,9 +21,6 @@ public class WeatherHandler implements Handler {
         double temperature = weatherEventJson.get("temperature").getAsDouble();
 
         // TODO change the example for a real process
-        // Example: Perform some processing based on the weather event
-        System.out.println("Weather Event Processed: City - " + city + ", Condition - " + condition + ", Temperature - " + temperature);
-
         // Notify subscribers with the processed information
         notifySubscribers(city + " - Condition: " + condition + ", Temperature: " + temperature);
     }

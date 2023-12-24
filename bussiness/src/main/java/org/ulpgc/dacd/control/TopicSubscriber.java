@@ -4,11 +4,13 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.ulpgc.dacd.control.exceptions.EventReceiverException;
+
 import javax.jms.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-
 
 public class TopicSubscriber implements Subscriber {
     private static final Logger logger = Logger.getLogger(TopicSubscriber.class.getName());
@@ -19,11 +21,11 @@ public class TopicSubscriber implements Subscriber {
     private final String topicName;
     private final String clientID;
 
-    public TopicSubscriber(String brokerUrl, String topicName, String clientID, HandlerFactory handlerFactory) {
+    public TopicSubscriber(String brokerUrl, String topicName, String clientID) {
         this.brokerUrl = brokerUrl;
         this.topicName = topicName;
         this.clientID = clientID;
-        this.handlerFactory = handlerFactory;
+        this.handlerFactory = new HandlerFactory();
     }
 
     @Override
