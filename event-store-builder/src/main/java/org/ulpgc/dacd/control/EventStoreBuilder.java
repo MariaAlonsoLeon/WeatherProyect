@@ -1,5 +1,5 @@
 package org.ulpgc.dacd.control;
 
 public interface EventStoreBuilder {
-    void save(String message);
+    void save(String message, String topic);
 }
