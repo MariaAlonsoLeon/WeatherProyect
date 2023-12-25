@@ -7,18 +7,24 @@ import java.util.Map;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import org.ulpgc.dacd.model.*;
+
+import java.util.List;
+
 public class DataMartBuilder {
     private DataLakeAccessor dataLakeAccessor;
     private FlightHandler flightHandler;
     private WeatherHandler weatherHandler;
 
-    private Map<String, String> dataMart; // Assuming a simple map structure for the in-memory graph
+    private Modelo modelo; // Instead of Map<String, String> dataMart
+    private List<LocationNode> locations; // List of available locations
 
-    public DataMartBuilder(DataLakeAccessor dataLakeAccessor, FlightHandler flightHandler, WeatherHandler weatherHandler) {
+    public DataMartBuilder(DataLakeAccessor dataLakeAccessor, FlightHandler flightHandler, WeatherHandler weatherHandler, List<LocationNode> locations) {
         this.dataLakeAccessor = dataLakeAccessor;
         this.flightHandler = flightHandler;
         this.weatherHandler = weatherHandler;
-        this.dataMart = new HashMap<>();
+        this.locations = locations;
+        this.modelo = new Modelo();
     }
 
     public void buildDataMart() {
@@ -31,7 +37,7 @@ public class DataMartBuilder {
         List<String> weatherData = dataLakeAccessor.getWeatherData();
         List<String> flightData = dataLakeAccessor.getFlightData();
 
-        // Process and store the data in the in-memory graph (dataMart)
+        // Process and store the data in the model (modelo)
         processWeatherData(weatherData);
         processFlightData(flightData);
     }
@@ -43,29 +49,22 @@ public class DataMartBuilder {
     }
 
     private void handleFlightEvent(String message) {
-        // Process and update the in-memory graph (dataMart) for flight events
+        // Process and update the model (modelo) for flight events
         processFlightData(List.of(message));
     }
 
     private void handleWeatherEvent(String message) {
-        // Process and update the in-memory graph (dataMart) for weather events
+        // Process and update the model (modelo) for weather events
         processWeatherData(List.of(message));
     }
 
     private void processFlightData(List<String> flightData) {
         for (String flightEvent : flightData) {
-            JsonObject eventJson = JsonParser.parseString(flightEvent).getAsJsonObject();
+            // Parse flight event and create FlightNode
+            FlightNode flightNode = parseFlightEvent(flightEvent);
 
-            // Extract relevant information from the flight event JSON
-            String flightId = eventJson.get("flightId").getAsString();
-            String departureAirport = eventJson.get("departureAirport").getAsString();
-            String arrivalAirport = eventJson.get("arrivalAirport").getAsString();
-            double price = eventJson.get("price").getAsDouble();
-
-            // Update dataMart with flightData
-            String key = flightId; // You might want to use a unique key
-            String value = "Flight from " + departureAirport + " to " + arrivalAirport + " - Price: " + price;
-            dataMart.put(key, value);
+            // Add flight to the model (modelo)
+            modelo.addFlight(flightNode);
 
             System.out.println("Flight Event Processed: " + flightEvent);
         }
@@ -73,18 +72,50 @@ public class DataMartBuilder {
 
     private void processWeatherData(List<String> weatherData) {
         for (String weatherEvent : weatherData) {
-            JsonObject eventJson = JsonParser.parseString(weatherEvent).getAsJsonObject();
+            // Parse weather event and create WeatherNode
+            WeatherNode weatherNode = parseWeatherEvent(weatherEvent);
 
-            // Extract relevant information from the weather event JSON
-            String ts = eventJson.get("ts").getAsString();
-            double temperature = eventJson.get("temperature").getAsDouble();
-
-            // Update dataMart with weatherData
-            String key = ts; // You might want to use a unique key
-            String value = "Weather in " + ts + ", Temperature: " + temperature;
-            dataMart.put(key, value);
+            // Add weather to the model (modelo)
+            modelo.addWeather(weatherNode);
 
             System.out.println("Weather Event Processed: " + weatherEvent);
+        }
+    }
+
+    private FlightNode parseFlightEvent(String flightEvent) {
+        JsonObject flightJson = JsonParser.parseString(flightEvent).getAsJsonObject();
+
+        String flightId = flightJson.get("flightId").getAsString();
+        String departureAirport = flightJson.get("departureAirport").getAsString();
+        String arrivalAirport = flightJson.get("arrivalAirport").getAsString();
+        double price = flightJson.get("price").getAsDouble();
+
+        return new FlightNode(flightId, departureAirport, arrivalAirport, price);
+    }
+
+    private WeatherNode parseWeatherEvent(String weatherEvent) {
+        JsonObject weatherJson = JsonParser.parseString(weatherEvent).getAsJsonObject();
+
+        String ts = weatherJson.get("ts").getAsString();
+        String city = weatherJson.get("city").getAsString();
+        double temperature = weatherJson.get("temperature").getAsDouble();
+        WeatherType weatherType = parseWeatherType(weatherJson.get("weatherType").getAsString());
+
+        return new WeatherNode(ts, city, temperature, weatherType);
+    }
+
+    private WeatherType parseWeatherType(String weatherType) {
+        switch (weatherType.toLowerCase()) {
+            case "cold":
+                return WeatherType.COLD;
+            case "warm":
+                return WeatherType.WARM;
+            case "rainy":
+                return WeatherType.RAINY;
+            case "clear":
+                return WeatherType.CLEAR;
+            default:
+                throw new IllegalArgumentException("Unknown weather type: " + weatherType);
         }
     }
 }
