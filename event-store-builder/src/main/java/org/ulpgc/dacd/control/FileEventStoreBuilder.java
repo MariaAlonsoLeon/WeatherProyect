@@ -15,7 +15,7 @@ import java.util.logging.Logger;
 
 public class FileEventStoreBuilder implements EventStoreBuilder {
 
-    private static final String EVENTSTORE_DIRECTORY = "\\eventstore\\prediction.Weather\\";
+    private static final String EVENTSTORE_DIRECTORY = "\\datalake\\eventstore\\";
     private final String baseDirectory;
     private static final Logger logger = Logger.getLogger(TopicSubscriber.class.getName());
 
@@ -24,11 +24,11 @@ public class FileEventStoreBuilder implements EventStoreBuilder {
     }
 
     @Override
-    public void save(String message) {
+    public void save(String message, String topic) {
         String ss = getJsonValue(message, "ss");
         String dateString = getDateString(message);
-        createDirectory(ss);
-        String filePath = buildFilePath(ss, dateString);
+        createDirectory(ss, topic);
+        String filePath = buildFilePath(ss, topic, dateString);
         writeEventToFile(message, filePath);
     }
 
@@ -37,8 +37,8 @@ public class FileEventStoreBuilder implements EventStoreBuilder {
         return new SimpleDateFormat("yyyyMMdd").format(Date.from(ts));
     }
 
-    private String buildFilePath(String ss, String dateString) {
-        return Paths.get(baseDirectory, EVENTSTORE_DIRECTORY, ss, dateString + ".events").toString();
+    private String buildFilePath(String ss, String topic ,String dateString) {
+        return Paths.get(baseDirectory, EVENTSTORE_DIRECTORY, topic, ss, dateString + ".events").toString();
     }
 
     private void writeEventToFile(String message, String filePath) {
@@ -51,8 +51,8 @@ public class FileEventStoreBuilder implements EventStoreBuilder {
         }
     }
 
-    private void createDirectory(String ss) {
-        String directoryPath = Paths.get(baseDirectory, EVENTSTORE_DIRECTORY, ss).toString();
+    private void createDirectory(String ss, String topic) {
+        String directoryPath = Paths.get(baseDirectory, EVENTSTORE_DIRECTORY, topic, ss).toString();
         File directory = new File(directoryPath);
         if (!directory.exists()) {
             if (directory.mkdirs()) {
