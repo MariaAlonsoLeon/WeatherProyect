@@ -1,10 +1,14 @@
 package org.ulpgc.dacd.control;
 
 import com.google.gson.*;
+import org.ulpgc.dacd.control.exceptions.StoreException;
+import com.google.gson.*;
 import org.apache.activemq.ActiveMQConnectionFactory;
-import org.example.model.Flight;
-import org.example.control.exceptions.StoreException;
+import org.ulpgc.dacd.control.exceptions.StoreException;
+import org.ulpgc.dacd.model.Flight;
 import javax.jms.*;
+import java.time.Instant;
+
 import java.time.Instant;
 
 public class JMSFlightStore implements FlightStore {

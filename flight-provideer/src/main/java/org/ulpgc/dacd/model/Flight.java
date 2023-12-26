@@ -15,7 +15,7 @@ public class Flight {
     public Flight(String flightDate, String flightStatus, Location departure, Location arrival,
                   String airline, String flightNumber) {
         this.ts = Instant.now();
-        this.ss = "sensor";
+        this.ss = "flight-provider";
         this.flightDate = flightDate;
         this.flightStatus = flightStatus;
         this.departure = departure;

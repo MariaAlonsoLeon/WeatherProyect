@@ -1,7 +1,8 @@
 package org.ulpgc.dacd.control;
 
-import org.example.control.exceptions.StoreException;
-import org.example.model.Flight;
+
+import org.ulpgc.dacd.control.exceptions.StoreException;
+import org.ulpgc.dacd.model.Flight;
 
 public interface FlightStore {
 

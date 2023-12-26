@@ -12,6 +12,8 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -29,21 +31,24 @@ public class AviationStackFlightSupplier implements FlightSupplier {
 
     @Override
     public List<Flight> getFlights(Location departure, Location arrival) {
-         // Reemplaza con la fecha deseada
-        String url = buildUrl(departure, arrival);
-        System.out.println(url);
-        return parseFlightData(url, departure, arrival);
+        //String url = buildUrl(departure, arrival);
+        List<Flight> flights = new ArrayList<>();
+        for (String currentDate : generateDateList()) {
+            String url = buildUrl(departure, arrival, currentDate);
+            System.out.println(url);
+            flights.addAll(parseFlightData(url, departure, arrival));
+        }
+        return flights;
     }
 
-    private String buildUrl(Location departure, Location arrival) {
+    private String buildUrl(Location departure, Location arrival, String currentDate) {
         String departureCode = departure.name(); // Use IATA code or ICAO code based on your preference
         String arrivalCode = arrival.name(); // Use IATA code or ICAO code based on your preference
 
         String params = String.format(
-                "access_key=%s&limit=5&dep_iata=%s&arr_iata=%s",
-                accessKey, departureCode, arrivalCode
+                "access_key=%s&limit=1&flight_date=%s&dep_iata=%s&arr_iata=%s",
+                accessKey, currentDate,departureCode, arrivalCode
         );
-
         return String.format("%s?%s", templateUrl, params);
     }
 
@@ -115,6 +120,17 @@ public class AviationStackFlightSupplier implements FlightSupplier {
 
     private void handleException(String message, Exception e) {
         logger.log(Level.SEVERE, message, e);
+    }
+
+    private List<String> generateDateList() {
+        List<String> dateList = new ArrayList<>();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        LocalDate currentDate = LocalDate.now();
+        for (int i = 0; i <= 5; i++) {
+            dateList.add(currentDate.plusDays(i).format(formatter));
+        }
+
+        return dateList;
     }
 }
 
