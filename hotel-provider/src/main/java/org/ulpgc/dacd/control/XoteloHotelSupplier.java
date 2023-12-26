@@ -25,9 +25,9 @@ public class XoteloHotelSupplier implements HotelSupplier {
     }
 
     @Override
-    public List<HotelTaxes> getHotelPrices(Location location) {
+    public List<HotelTaxes> getHotelPrices(Location location, List<String> dates) {
         List<HotelTaxes> hotelTaxesList = new ArrayList<>();
-        for (String currentDate : generateDateList()) {
+        for (String currentDate : dates) {
             System.out.println(currentDate);
             String url = buildUrl(location.apiHotelsToken(), currentDate);
             System.out.println(url);
@@ -87,17 +87,6 @@ public class XoteloHotelSupplier implements HotelSupplier {
         logger.log(Level.SEVERE, message, e);
     }
 
-    private List<String> generateDateList() {
-        List<String> dateList = new ArrayList<>();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        LocalDate tomorrow = LocalDate.now().plusDays(2);
-
-        for (int i = 0; i < 5; i++) {
-            dateList.add(tomorrow.plusDays(i).format(formatter));
-        }
-
-        return dateList;
-    }
 
     private String getTomorrowDate() { // TODO change this in order to not repeat code
         LocalDate tomorrow = LocalDate.now().plusDays(1);

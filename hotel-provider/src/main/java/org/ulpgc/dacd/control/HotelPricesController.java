@@ -4,6 +4,8 @@ import org.ulpgc.dacd.control.exceptions.StoreException;
 import org.ulpgc.dacd.model.HotelTaxes;
 import org.ulpgc.dacd.model.Location;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
@@ -36,9 +38,10 @@ public class HotelPricesController {
     }
 
     private void fetchAndStoreHotelPrices() {
+        List<String> dates = generateDateList();
         try{
             for (Location location : locations) {
-                for (HotelTaxes hotelTax : hotelPricesSupplier.getHotelPrices(location)) {
+                for (HotelTaxes hotelTax : hotelPricesSupplier.getHotelPrices(location, dates)) {
                     System.out.println(hotelTax);
                     hotelStore.save(hotelTax);
                 }
@@ -48,6 +51,17 @@ public class HotelPricesController {
         }
     }
 
+    private List<String> generateDateList() {
+        List<String> dateList = new ArrayList<>();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        LocalDate tomorrow = LocalDate.now().plusDays(2);
+
+        for (int i = 0; i < 5; i++) {
+            dateList.add(tomorrow.plusDays(i).format(formatter));
+        }
+
+        return dateList;
+    }
     private static List<Location> loadLocations() {
         List<Location> locations = new ArrayList<>();
         locations.add(new Location("Gran Canaria", "Hotel Riu Gran Canaria", 27.74044, -15.60505, "g230095-d530762"));
