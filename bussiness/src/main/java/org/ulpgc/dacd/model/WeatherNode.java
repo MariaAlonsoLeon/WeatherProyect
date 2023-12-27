@@ -1,5 +1,5 @@
 package org.ulpgc.dacd.model;
 
-public record WeatherNode(String id, String city, double temperature, double rainProbability, int clouds, WeatherType weatherType){
+public record WeatherNode(String predictionTime, String location, int humidity, double temperature, int clouds, double rainProbability, WeatherType weatherType){
 
 }

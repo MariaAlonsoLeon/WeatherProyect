@@ -15,9 +15,8 @@ public class TSVLocationsLoader {
             while ((linea = br.readLine()) != null) {
                 String[] partes = linea.split("\t");
                 if (partes.length == 2) {
-                    String id = partes[0];
                     String nombre = partes[1];
-                    localizaciones.add(new LocationNode(id, nombre));
+                    localizaciones.add(new LocationNode(nombre));
                 }
             }
         }

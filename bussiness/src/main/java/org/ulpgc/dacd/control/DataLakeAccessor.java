@@ -9,52 +9,45 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.nio.file.Path;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class DataLakeAccessor {
     private static final Logger logger = Logger.getLogger(DataLakeAccessor.class.getName());
     private final String dataLakeDirectory;
+    private static final int MAX_EVENTS = 5;
 
     public DataLakeAccessor(String dataLakeDirectory) {
         this.dataLakeDirectory = dataLakeDirectory;
     }
 
     public List<String> getWeatherData() {
-        return getLatestEventData("prediction.Weather");
+        return getLatestEventData("prediction.Weather", "weather-provider");
     }
 
-    public List<String> getFlightData() {
-        return getLatestEventData("prediction.Flight");
+    public List<String> getHotelData() {
+        return getLatestEventData("prediction.Hotel", "hotel-provider");
     }
 
-    private List<String> getLatestEventData(String topic) {
+    private List<String> getLatestEventData(String topic, String ss) {
         try {
-            String eventStoreDirectory = Paths.get(dataLakeDirectory, "eventstore", topic).toString();
-            List<String> eventFiles = findEventFiles(eventStoreDirectory);
-            if (!eventFiles.isEmpty()) {
-                String latestEventFile = Collections.max(eventFiles);
-                return readEventsFromFile(Paths.get(eventStoreDirectory, latestEventFile).toString());
-            }
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
+            String today = dateFormat.format(new Date());
+
+            String eventStoreDirectory = Paths.get(dataLakeDirectory, "eventstore", topic, ss, today + ".events").toString();
+
+            return readLatestEventsFromFile(eventStoreDirectory, MAX_EVENTS);
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Error reading latest event data", e);
         }
         return Collections.emptyList();
     }
 
-    private List<String> findEventFiles(String eventStoreDirectory) {
-        List<String> eventFiles = new ArrayList<>();
+    private List<String> readLatestEventsFromFile(String filePath, int maxEvents) throws IOException {
+        List<String> allEvents = Files.readAllLines(Paths.get(filePath));
 
-        try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(Paths.get(eventStoreDirectory), "*.events")) {
-            for (Path path : directoryStream) {
-                eventFiles.add(path.getFileName().toString());
-            }
-        } catch (IOException e) {
-            logger.log(Level.SEVERE, "Error reading event files", e);
-        }
-
-        return eventFiles;
-    }
-
-    private List<String> readEventsFromFile(String filePath) throws IOException {
-        return Files.readAllLines(Paths.get(filePath));
+        // Obtener los últimos 'maxEvents' eventos (o todos si hay menos de 'maxEvents')
+        int startIndex = Math.max(0, allEvents.size() - maxEvents);
+        return allEvents.subList(startIndex, allEvents.size());
     }
 }

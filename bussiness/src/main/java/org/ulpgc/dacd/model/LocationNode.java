@@ -1,4 +1,4 @@
 package org.ulpgc.dacd.model;
 
-public record LocationNode(String id, String name){
+public record LocationNode(String name){
 }
