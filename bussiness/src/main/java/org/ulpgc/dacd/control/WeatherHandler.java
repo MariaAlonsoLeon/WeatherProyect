@@ -15,7 +15,7 @@ public class WeatherHandler implements Handler {
 
     public WeatherHandler(Modelo modelo) {
         this.modelo = modelo;
-        this.locationRecommendationService = new LocationRecommendationService();
+        this.locationRecommendationService = new LocationRecommendationService(modelo);
     }
 
     @Override

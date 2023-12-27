@@ -1,17 +1,22 @@
 package org.ulpgc.dacd.control;
 
+import org.neo4j.driver.Record;
 import org.ulpgc.dacd.model.LocationNode;
+import org.ulpgc.dacd.model.Modelo;
 import org.ulpgc.dacd.model.WeatherNode;
 import org.ulpgc.dacd.model.WeatherType;
+import org.neo4j.driver.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class LocationRecommendationService {
     private List<String> locations;
+    private Modelo modelo;
 
-    public LocationRecommendationService() {
+    public LocationRecommendationService(Modelo modelo) {
         this.locations = locations;
+        this.modelo = modelo;
     }
 
     public List<String> recommendLocationsByWeatherType(List<WeatherNode> weatherData, WeatherType weatherType) {
@@ -61,5 +66,13 @@ public class LocationRecommendationService {
         } else {
             return WeatherType.UNKNOWN;
         }
+    }
+
+    public List<String> obtenerLocalizacionesPorTipoClima(String weatherType) {
+        return modelo.obtenerLocalizacionesPorTipoClima(weatherType);
+    }
+
+    public double obtenerTarifaMasBarata(String locationName, String date){
+        return modelo.obtenerTarifaMasBarata(locationName, date);
     }
 }

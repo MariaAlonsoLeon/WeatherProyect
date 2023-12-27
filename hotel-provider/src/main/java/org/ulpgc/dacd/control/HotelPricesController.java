@@ -69,7 +69,7 @@ public class HotelPricesController {
         locations.add(new Location("Madrid", "Hotel Riu Plaza España", 40.42414, -3.71095, "g187514-d15235805"));
         locations.add(new Location("Oslo", "Hotel Continental", 59.91409, 10.73352, "g190479-d232475"));
         locations.add(new Location("Andorra", "Grau Roig Andorra Boutique Hotel & Spa", 42.53398972425904, 1.7007644831819493, "g1170716-d1219390"));
-        locations.add(new Location("Praia de Boca Salina", "Hotel Riu Palace Boavista ", 16.142363, -22.903287, "g482843-d15087179"));
+        locations.add(new Location("Praia de Boca Salina", "Hotel Riu Palace Boavista", 16.142363, -22.903287, "g482843-d15087179"));
         locations.add(new Location("London",  "Shangri-La The Shard", 51.504501, -0.086500, "g186338-d6484754"));
         locations.add(new Location("Marrakech", "La Maison Arabe", 34.02306, -6.832003, "g293734-d303075"));
         return locations;
