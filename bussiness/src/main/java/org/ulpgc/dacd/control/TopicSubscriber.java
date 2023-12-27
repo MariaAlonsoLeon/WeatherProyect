@@ -14,7 +14,7 @@ public class TopicSubscriber implements Subscriber {
     private static final Logger logger = Logger.getLogger(TopicSubscriber.class.getName());
     private Connection connection;
     private Session session;
-    private final Map<String, Handler> topicHandlers; // Mapa de handlers por tema
+    private final Map<String, Handler> topicHandlers;
     private final String brokerUrl;
     private final List<String> topicNames;
     private final String clientID;
@@ -26,7 +26,6 @@ public class TopicSubscriber implements Subscriber {
         this.topicHandlers = new HashMap<>();
     }
 
-    // Método para registrar un handler para un tema específico
     public void registerHandler(String topic, Handler handler) {
         topicHandlers.put(topic, handler);
     }
@@ -65,10 +64,8 @@ public class TopicSubscriber implements Subscriber {
         if (message instanceof TextMessage) {
             try {
                 String receivedMessage = ((TextMessage) message).getText();
-                // Obtener el handler correspondiente al tema
                 Handler handler = topicHandlers.get(topicName);
                 if (handler != null) {
-                    // Llamar al método handleEvent del handler
                     handler.handleEvent(receivedMessage);
                     System.out.println("Received message for topic '" + topicName + "': " + receivedMessage);
                 } else {

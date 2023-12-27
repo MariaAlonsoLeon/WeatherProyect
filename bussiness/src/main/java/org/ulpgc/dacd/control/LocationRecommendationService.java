@@ -43,7 +43,7 @@ public class LocationRecommendationService {
             case CLEAR:
                 return cloudPercentage < 30;
             default:
-                return true; // Assume all locations are suitable if the weather is not recognized
+                return true;
         }
     }
 

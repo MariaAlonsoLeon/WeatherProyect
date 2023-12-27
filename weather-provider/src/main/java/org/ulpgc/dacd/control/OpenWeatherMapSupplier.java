@@ -28,6 +28,7 @@ public class OpenWeatherMapSupplier implements WeatherSupplier {
     @Override
     public List<Weather> getWeathers(Location location) {
         String url = buildUrl(location);
+        System.out.println(url);
         return parseWeatherData(url, location);
     }
 
