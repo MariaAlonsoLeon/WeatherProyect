@@ -1,5 +1,5 @@
 package org.ulpgc.dacd.model;
 
-public record HotelPriceNode(String name, double tax, String locationName) {
+public record HotelPriceNode(String name, double tax, String locationName, String predictionTime) {
 
 }

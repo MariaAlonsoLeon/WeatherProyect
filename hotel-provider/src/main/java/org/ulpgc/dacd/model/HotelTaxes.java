@@ -5,17 +5,30 @@ import java.time.Instant;
 public class HotelTaxes {
     private String ss;
     private Instant ts;
+    private String predictionTime;
     private String name;
-    private float tax;
+    private float rate;
     private Location location;
 
 
-    public HotelTaxes(String name, float tax, Location location) {
+    public HotelTaxes(String name, float rate, Location location, String predictionTime) {
         this.ss = "hotel-provider";
         this.ts = Instant.now();
         this.name = name;
-        this.tax = tax;
+        this.rate = rate;
         this.location = location;
+        this.predictionTime = predictionTime;
+    }
 
+    @Override
+    public String toString() {
+        return "HotelTaxes{" +
+                "ss='" + ss + '\'' +
+                ", ts=" + ts +
+                ", predictionTime='" + predictionTime + '\'' +
+                ", name='" + name + '\'' +
+                ", tax=" + rate +
+                ", location=" + location +
+                '}';
     }
 }

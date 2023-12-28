@@ -26,31 +26,38 @@ public class Main {
         String neo4jUri = "bolt://localhost:7687";
         String neo4jUser = "neo4j";
 
-        DataLakeAccessor dataLakeAccessor = new DataLakeAccessor(dataLakeDirectory);
-        Modelo modelo = new Modelo(neo4jUri, neo4jUser, neo4jPassword);
-        DataMartBuilder dataMartBuilder = new DataMartBuilder(modelo, dataLakeAccessor);
-        TopicSubscriber topicSubscriber = new TopicSubscriber(brokerUrl, List.of("prediction.Weather", "prediction.Hotel"), "clientId");
-        HandlerFactory handlerFactory = new HandlerFactory(modelo);
+        try (Modelo modelo = new Modelo(neo4jUri, neo4jUser, neo4jPassword)) {
+            modelo.limpiarGrafo();
+            DataLakeAccessor dataLakeAccessor = new DataLakeAccessor(dataLakeDirectory);
+            DataMartBuilder dataMartBuilder = new DataMartBuilder(modelo, dataLakeAccessor);
+            // Llamada a buildDataMart si es necesario
+            dataMartBuilder.buildDataMart();
 
-        WeatherHandler weatherHandler = new WeatherHandler(modelo);
-        HotelHandler hotelHandler = new HotelHandler(modelo);
+            TopicSubscriber topicSubscriber = new TopicSubscriber(brokerUrl, List.of("prediction.Weather", "prediction.Hotel"), "clientId");
+            HandlerFactory handlerFactory = new HandlerFactory(modelo);
 
-        topicSubscriber.registerHandler("prediction.Weather", weatherHandler);
-        topicSubscriber.registerHandler("prediction.Hotel", hotelHandler);
+            WeatherHandler weatherHandler = new WeatherHandler(modelo);
+            HotelHandler hotelHandler = new HotelHandler(modelo);
 
-        ExecutorService executorService = Executors.newSingleThreadExecutor();
-        executorService.submit(() -> {
-            try {
-                topicSubscriber.start();
-            } catch (EventReceiverException e) {
-                logger.log(Level.SEVERE, "Error starting TopicSubscriber", e);
-            }
-        });
+            topicSubscriber.registerHandler("prediction.Weather", weatherHandler);
+            topicSubscriber.registerHandler("prediction.Hotel", hotelHandler);
 
-        // Agregar las siguientes líneas para probar la interfaz de usuario
-        CommandLineInterface cli = new CommandLineInterface(new LocationRecommendationService(modelo));
-        cli.iniciar();
+            ExecutorService executorService = Executors.newSingleThreadExecutor();
+            executorService.submit(() -> {
+                try {
+                    topicSubscriber.start();
+                } catch (EventReceiverException e) {
+                    logger.log(Level.SEVERE, "Error starting TopicSubscriber", e);
+                }
+            });
 
-        executorService.shutdown();
+            // Agregar las siguientes líneas para probar la interfaz de usuario
+            CommandLineInterface cli = new CommandLineInterface(new LocationRecommendationService(modelo));
+            cli.iniciar();
+
+            executorService.shutdown();
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Error during execution", e);
+        }
     }
 }

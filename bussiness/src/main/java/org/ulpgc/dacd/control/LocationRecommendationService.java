@@ -9,6 +9,7 @@ import org.neo4j.driver.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class LocationRecommendationService {
     private List<String> locations;
@@ -68,7 +69,7 @@ public class LocationRecommendationService {
         }
     }
 
-    public List<String> obtenerLocalizacionesPorTipoClima(String weatherType) {
+    public Set<String> obtenerLocalizacionesPorTipoClima(String weatherType) {
         return modelo.obtenerLocalizacionesPorTipoClima(weatherType);
     }
 

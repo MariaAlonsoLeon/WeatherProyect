@@ -5,6 +5,7 @@ import org.ulpgc.dacd.control.LocationRecommendationService;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
+import java.util.Set;
 
 public class CommandLineInterface {
     private final LocationRecommendationService locationRecommendationService;
@@ -40,6 +41,7 @@ public class CommandLineInterface {
 
     private void mostrarRecomendacion() {
         System.out.println("=== Elegir Tipo de Clima ===");
+        System.out.println("COLD-WARM-RANINY-SNOWY-CLEAR");
         // Aquí puedes mostrar los tipos de clima disponibles y permitir al usuario seleccionar uno
         // Supongamos que obtienes la selección del usuario y la almacenas en la variable tipoClimaElegido
 
@@ -52,26 +54,37 @@ public class CommandLineInterface {
 
         System.out.println("=== Localizaciones con Clima " + tipoClimaElegido + " ===");
         // Obtener las localizaciones con el clima seleccionado
-        List<String> listaDeLocalizaciones = locationRecommendationService.obtenerLocalizacionesPorTipoClima(tipoClimaElegido);
+        Set<String> listaDeLocalizaciones = locationRecommendationService.obtenerLocalizacionesPorTipoClima(tipoClimaElegido);
 
         if (listaDeLocalizaciones.isEmpty()) {
             System.out.println("No hay localizaciones con el tipo de clima seleccionado.");
             return;
+        } else {
+            System.out.println("Localizaciones disponibles:");
+            for (String location : listaDeLocalizaciones) {
+                System.out.println(location);
+            }
         }
 
-        // Mostrar las ofertas más baratas para cada localización
-        System.out.println("=== Ofertas Más Baratas ===");
-        for (String location : listaDeLocalizaciones) {
-            double tarifaMasBarata = locationRecommendationService.obtenerTarifaMasBarata(location, "2023-12-29"); // Supongamos que la fecha es fija
-            System.out.println("Localización: " + location + ", Tarifa Más Barata: " + tarifaMasBarata);
+        // Solicitar al usuario que elija una localización
+        String localizacionElegida = obtenerLocalizacionElegida(listaDeLocalizaciones);
+
+        if (localizacionElegida == null) {
+            System.out.println("Localización no válida. Volviendo al menú principal.");
+            return;
         }
+
+        // Mostrar la oferta más barata para la localización elegida
+        System.out.println("=== Oferta Más Barata para " + localizacionElegida + " ===");
+        double tarifaMasBarata = locationRecommendationService.obtenerTarifaMasBarata(localizacionElegida, "2023-12-30"); // Supongamos que la fecha es fija
+        System.out.println("Localización: " + localizacionElegida + ", Tarifa Más Barata: " + tarifaMasBarata);
     }
 
     private String obtenerTipoClimaSeleccionado() {
         Scanner scanner = new Scanner(System.in);
 
         // Tipos de clima válidos
-        List<String> tiposDeClimaValidos = Arrays.asList("COLD", "RAINY", "WARN", "SNOWY", "CLEAR");
+        List<String> tiposDeClimaValidos = Arrays.asList("COLD", "RAINY", "WARM", "SNOWY", "CLEAR");
 
         while (true) {
             System.out.print("Seleccione el tipo de clima: ");
@@ -82,6 +95,22 @@ public class CommandLineInterface {
                 return tipoClima;
             } else {
                 System.out.println("Tipo de clima no válido. Inténtelo de nuevo.");
+            }
+        }
+    }
+
+    private String obtenerLocalizacionElegida(Set<String> localizacionesDisponibles) {
+        Scanner scanner = new Scanner(System.in);
+
+        while (true) {
+            System.out.print("Elija una localización: ");
+            String localizacionElegida = scanner.nextLine();
+
+            // Validar la localización ingresada
+            if (localizacionesDisponibles.contains(localizacionElegida)) {
+                return localizacionElegida;
+            } else {
+                System.out.println("Localización no válida. Inténtelo de nuevo.");
             }
         }
     }
