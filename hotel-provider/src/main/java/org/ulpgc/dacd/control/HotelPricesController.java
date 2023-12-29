@@ -4,6 +4,9 @@ import org.ulpgc.dacd.control.exceptions.StoreException;
 import org.ulpgc.dacd.model.HotelTaxes;
 import org.ulpgc.dacd.model.Location;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -64,14 +67,22 @@ public class HotelPricesController {
     }
     private static List<Location> loadLocations() {
         List<Location> locations = new ArrayList<>();
-        locations.add(new Location("Gran Canaria", "Hotel Riu Gran Canaria", 27.74044, -15.60505, "g230095-d530762"));
-        locations.add(new Location("Venice", "Hotel Palladio", 37.83606, 15.27274, "g187870-d615183"));
-        locations.add(new Location("Madrid", "Hotel Riu Plaza España", 40.42414, -3.71095, "g187514-d15235805"));
-        locations.add(new Location("Oslo", "Hotel Continental", 59.91409, 10.73352, "g190479-d232475"));
-        locations.add(new Location("Andorra", "Grau Roig Andorra Boutique Hotel & Spa", 42.53398972425904, 1.7007644831819493, "g1170716-d1219390"));
-        locations.add(new Location("Praia de Boca Salina", "Hotel Riu Palace Boavista", 16.142363, -22.903287, "g482843-d15087179"));
-        locations.add(new Location("London",  "Shangri-La The Shard", 51.504501, -0.086500, "g186338-d6484754"));
-        locations.add(new Location("Marrakech", "La Maison Arabe", 34.02306, -6.832003, "g293734-d303075"));
+        try (BufferedReader br = new BufferedReader(new FileReader("locations.tsv"))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] parts = line.split("\t");
+                if (parts.length >= 5) {
+                    String name = parts[0];
+                    String hotelName = parts[3];
+                    double latitude = Double.parseDouble(parts[1]);
+                    double longitude = Double.parseDouble(parts[2]);
+                    String hotelKey = parts[4];
+                    locations.add(new Location(name, hotelName, latitude, longitude, hotelKey));
+                }
+            }
+        } catch (IOException | NumberFormatException e) {
+            e.printStackTrace();
+        }
         return locations;
     }
 }

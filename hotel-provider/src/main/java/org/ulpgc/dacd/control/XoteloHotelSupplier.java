@@ -31,35 +31,35 @@ public class XoteloHotelSupplier implements HotelSupplier {
             System.out.println(currentDate);
             String url = buildUrl(location.apiHotelsToken(), currentDate);
             System.out.println(url);
-            hotelTaxesList.addAll(parseHotelData(url, location));
+            hotelTaxesList.addAll(parseHotelData(url, location, currentDate));
         }
-
+        System.out.println(hotelTaxesList);
         return hotelTaxesList;
     }
 
     private String buildUrl(String hotelToken, String currentDate) {
         String tomorrowDate = getTomorrowDate();
-        return String.format("%s?hotel_key=%s&chk_in=%s&chk_out=%s", apiUrl, hotelToken, tomorrowDate, currentDate);
+        return String.format("%s?hotel_key=%s&chk_in=%s&chk_out=%s&currency=EUR", apiUrl, hotelToken, tomorrowDate, currentDate);
     }
 
-    private List<HotelTaxes> parseHotelData(String url, Location location) {
+    private List<HotelTaxes> parseHotelData(String url, Location location, String predictionTime) {
         try {
             String jsonData = getHotelFromUrl(url);
             JsonObject jsonObject = JsonParser.parseString(jsonData).getAsJsonObject();
             JsonObject result = jsonObject.getAsJsonObject("result");
             JsonArray rates = result.getAsJsonArray("rates");
-            return rates != null ? createHotelList(rates, location) : new ArrayList<>();
+            return rates != null ? createHotelList(rates, location, predictionTime) : new ArrayList<>();
         } catch (IOException e) {
             handleException("Error fetching or parsing hotel data", e);
             return new ArrayList<>();
         }
     }
 
-    private List<HotelTaxes> createHotelList(JsonArray rates, Location location) {
+    private List<HotelTaxes> createHotelList(JsonArray rates, Location location, String predictionTime) {
         List<HotelTaxes> hotelTaxesList = new ArrayList<>();
         for (int i = 0; i < rates.size(); i++) {
             JsonObject rate = rates.get(i).getAsJsonObject();
-            HotelTaxes hotelTaxes = createHotel(rate, location);
+            HotelTaxes hotelTaxes = createHotel(rate, location, predictionTime);
             if (hotelTaxes != null) {
                 hotelTaxesList.add(hotelTaxes);
             }
@@ -67,11 +67,12 @@ public class XoteloHotelSupplier implements HotelSupplier {
         return hotelTaxesList;
     }
 
-    private HotelTaxes createHotel(JsonObject rate, Location location) {
+    private HotelTaxes createHotel(JsonObject rate, Location location, String predictionTime) {
         try {
             String name = rate.get("name").getAsString();
             float rateValue = rate.get("rate").getAsFloat();
-            return new HotelTaxes(name, rateValue, location);
+            float tax = rate.has("tax") ? rate.get("tax").getAsFloat() : 0.0f;
+            return new HotelTaxes(name, rateValue + tax, location, predictionTime);
         } catch (Exception e) {
             handleException("Error creating HotelTaxes object", e);
             return null;
@@ -87,8 +88,7 @@ public class XoteloHotelSupplier implements HotelSupplier {
         logger.log(Level.SEVERE, message, e);
     }
 
-
-    private String getTomorrowDate() { // TODO change this in order to not repeat code
+    private String getTomorrowDate() {
         LocalDate tomorrow = LocalDate.now().plusDays(1);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         return tomorrow.format(formatter);

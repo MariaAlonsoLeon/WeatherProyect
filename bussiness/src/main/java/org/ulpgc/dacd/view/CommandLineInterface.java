@@ -2,10 +2,9 @@ package org.ulpgc.dacd.view;
 
 import org.ulpgc.dacd.control.LocationRecommendationService;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Scanner;
-import java.util.Set;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 public class CommandLineInterface {
     private final LocationRecommendationService locationRecommendationService;
@@ -42,9 +41,6 @@ public class CommandLineInterface {
     private void mostrarRecomendacion() {
         System.out.println("=== Elegir Tipo de Clima ===");
         System.out.println("COLD-WARM-RANINY-SNOWY-CLEAR");
-        // Aquí puedes mostrar los tipos de clima disponibles y permitir al usuario seleccionar uno
-        // Supongamos que obtienes la selección del usuario y la almacenas en la variable tipoClimaElegido
-
         String tipoClimaElegido = obtenerTipoClimaSeleccionado();
 
         if (tipoClimaElegido == null) {
@@ -53,7 +49,6 @@ public class CommandLineInterface {
         }
 
         System.out.println("=== Localizaciones con Clima " + tipoClimaElegido + " ===");
-        // Obtener las localizaciones con el clima seleccionado
         Set<String> listaDeLocalizaciones = locationRecommendationService.obtenerLocalizacionesPorTipoClima(tipoClimaElegido);
 
         if (listaDeLocalizaciones.isEmpty()) {
@@ -66,7 +61,6 @@ public class CommandLineInterface {
             }
         }
 
-        // Solicitar al usuario que elija una localización
         String localizacionElegida = obtenerLocalizacionElegida(listaDeLocalizaciones);
 
         if (localizacionElegida == null) {
@@ -74,23 +68,26 @@ public class CommandLineInterface {
             return;
         }
 
-        // Mostrar la oferta más barata para la localización elegida
+        String fechaReserva = obtenerFechaReserva();
+
+        if (fechaReserva == null) {
+            System.out.println("Fecha de reserva no válida. Volviendo al menú principal.");
+            return;
+        }
+
         System.out.println("=== Oferta Más Barata para " + localizacionElegida + " ===");
-        double tarifaMasBarata = locationRecommendationService.obtenerTarifaMasBarata(localizacionElegida, "2023-12-30"); // Supongamos que la fecha es fija
-        System.out.println("Localización: " + localizacionElegida + ", Tarifa Más Barata: " + tarifaMasBarata);
+        double tarifaMasBarata = locationRecommendationService.obtenerTarifaMasBarata(localizacionElegida, fechaReserva);
+        System.out.println("Localización: " + localizacionElegida + ", Fecha de Reserva: " + fechaReserva + ", Tarifa Más Barata: " + tarifaMasBarata);
     }
 
     private String obtenerTipoClimaSeleccionado() {
         Scanner scanner = new Scanner(System.in);
-
-        // Tipos de clima válidos
         List<String> tiposDeClimaValidos = Arrays.asList("COLD", "RAINY", "WARM", "SNOWY", "CLEAR");
 
         while (true) {
             System.out.print("Seleccione el tipo de clima: ");
             String tipoClima = scanner.nextLine();
 
-            // Validar el tipo de clima ingresado
             if (tiposDeClimaValidos.contains(tipoClima)) {
                 return tipoClima;
             } else {
@@ -106,7 +103,6 @@ public class CommandLineInterface {
             System.out.print("Elija una localización: ");
             String localizacionElegida = scanner.nextLine();
 
-            // Validar la localización ingresada
             if (localizacionesDisponibles.contains(localizacionElegida)) {
                 return localizacionElegida;
             } else {
@@ -114,4 +110,32 @@ public class CommandLineInterface {
             }
         }
     }
+
+    private String obtenerFechaReserva() {
+        Scanner scanner = new Scanner(System.in);
+
+        while (true) {
+            System.out.print("Ingrese la fecha de reserva (YYYY-MM-DD): ");
+            String fechaReserva = scanner.nextLine();
+
+            if (validarFormatoFecha(fechaReserva)) {
+                return fechaReserva;
+            } else {
+                System.out.println("Formato de fecha no válido. Inténtelo de nuevo.");
+            }
+        }
+    }
+
+    private boolean validarFormatoFecha(String fecha) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        dateFormat.setLenient(false);
+
+        try {
+            Date parsedDate = dateFormat.parse(fecha);
+            return true;
+        } catch (ParseException e) {
+            return false;
+        }
+    }
 }
+

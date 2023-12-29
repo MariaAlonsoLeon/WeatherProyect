@@ -25,7 +25,7 @@ public class HotelHandler implements Handler {
     private HotelPriceNode parseHotelEvent(String eventData) {
         JsonObject hotelEventJson = parseJson(eventData);
         String companyName = hotelEventJson.get("name").getAsString();
-        double tax = hotelEventJson.get("tax").getAsDouble();
+        double tax = hotelEventJson.get("rate").getAsDouble();
         JsonObject locationJson = hotelEventJson.getAsJsonObject("location");
         String locationName = locationJson.get("name").getAsString();
         String hotelName = locationJson.get("hotelName").getAsString();
