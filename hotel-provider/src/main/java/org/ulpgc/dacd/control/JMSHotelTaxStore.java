@@ -3,31 +3,30 @@ package org.ulpgc.dacd.control;
 import com.google.gson.*;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.ulpgc.dacd.control.exceptions.StoreException;
-import org.ulpgc.dacd.model.HotelTaxes;
-
+import org.ulpgc.dacd.model.HotelTax;
 import javax.jms.*;
 import java.time.Instant;
 
-public class JMSHotelStore implements HotelStore{
+public class JMSHotelTaxStore implements HotelTaxStore {
 
     private final String topicName;
     private final String brokerUrl;
     private final String clientId;
 
-    public JMSHotelStore(String brokerUrl, String topicName, String clientId) {
+    public JMSHotelTaxStore(String brokerUrl, String topicName, String clientId) {
         this.brokerUrl = brokerUrl;
         this.topicName = topicName;
         this.clientId = clientId;
     }
 
     @Override
-    public void save(HotelTaxes hotelPrices) throws StoreException {
+    public void save(HotelTax hotelTax) throws StoreException {
         try (Connection connection = createConnection()) {
             connection.setClientID(clientId);
             connection.start();
             Session session = createSession(connection);
             Topic topic = createTopic(session);
-            String jsonMessage = hotelPricesToJson(hotelPrices);
+            String jsonMessage = hotelTaxToJson(hotelTax);
             sendMessageToTopic(session, topic, jsonMessage);
         } catch (JMSException e) {
             throw new StoreException(e.getMessage());
@@ -62,9 +61,9 @@ public class JMSHotelStore implements HotelStore{
         System.out.println("Message sent to the queue: " + jsonMessage);
     }
 
-    private String hotelPricesToJson(HotelTaxes hotelPrices) {
+    private String hotelTaxToJson(HotelTax hotelTax) {
         Gson gson = prepareGson();
-        return gson.toJson(hotelPrices);
+        return gson.toJson(hotelTax);
     }
 
     private Gson prepareGson() {

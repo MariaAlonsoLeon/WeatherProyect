@@ -1,7 +1,7 @@
 package org.ulpgc.dacd.control;
 
 import org.ulpgc.dacd.control.exceptions.StoreException;
-import org.ulpgc.dacd.model.HotelTaxes;
+import org.ulpgc.dacd.model.HotelTax;
 import org.ulpgc.dacd.model.Location;
 
 import java.io.BufferedReader;
@@ -16,13 +16,13 @@ import java.util.TimerTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class HotelPricesController {
-    private static final Logger logger = Logger.getLogger(HotelPricesController.class.getName());
+public class HotelTaxController {
+    private static final Logger logger = Logger.getLogger(HotelTaxController.class.getName());
     private final List<Location> locations;
-    private final HotelSupplier hotelPricesSupplier;
-    private final HotelStore hotelStore;
+    private final HotelTaxSupplier hotelPricesSupplier;
+    private final HotelTaxStore hotelStore;
 
-    public HotelPricesController(HotelSupplier hotelPricesSupplier, HotelStore hotelStore) {
+    public HotelTaxController(HotelTaxSupplier hotelPricesSupplier, HotelTaxStore hotelStore) {
         this.locations = loadLocations();
         this.hotelPricesSupplier = hotelPricesSupplier;
         this.hotelStore = hotelStore;
@@ -44,7 +44,7 @@ public class HotelPricesController {
         List<String> dates = generateDateList();
         try{
             for (Location location : locations) {
-                for (HotelTaxes hotelTax : hotelPricesSupplier.getHotelPrices(location, dates)) {
+                for (HotelTax hotelTax : hotelPricesSupplier.getHotelTaxes(location, dates)) {
                     System.out.println(hotelTax);
                     hotelStore.save(hotelTax);
                 }
