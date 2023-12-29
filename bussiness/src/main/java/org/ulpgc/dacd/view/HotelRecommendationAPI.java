@@ -1,5 +1,6 @@
 package org.ulpgc.dacd.view;
 
+import com.google.gson.Gson;
 import org.ulpgc.dacd.control.LocationRecommendationService;
 import spark.Request;
 import spark.Response;
@@ -17,8 +18,11 @@ public class HotelRecommendationAPI {
     }
 
     public void init() {
-        staticFiles.location("/public");
+        //Spark.debugDebug(true); // Activa el modo de depuración de Spark
 
+        staticFiles.location("/public"); // Permite servir archivos estáticos desde la carpeta /public
+
+        // Definir rutas
         get("/climas", (req, res) -> {
             try {
                 return getTiposClima(req, res);
@@ -28,6 +32,16 @@ public class HotelRecommendationAPI {
                 return "Error interno del servidor: " + e.getMessage();
             }
         });
+
+        /*get("/localizaciones/:clima", (req, res) -> {
+            try {
+                return getLocalizaciones(req, res);
+            } catch (Exception e) {
+                e.printStackTrace();
+                res.status(500);
+                return "Error interno del servidor: " + e.getMessage();
+            }
+        });*/
 
         get("/localizaciones/:clima", (req, res) -> {
             try {
@@ -51,30 +65,25 @@ public class HotelRecommendationAPI {
     }
 
     private String getTiposClima(Request request, Response response) {
-        response.type("text/html");
-        return "<html><body><h1>Tipos de Clima</h1><p>COLD, RAINY, WARM, SNOWY, CLEAR</p></body></html>";
+        response.type("application/json");
+        return new Gson().toJson(Arrays.asList("COLD", "RAINY", "WARM", "SNOWY", "CLEAR"));
     }
 
     private String getLocalizaciones(Request request, Response response) {
-        response.type("text/html");
+        response.type("application/json");
         String tipoClima = request.params(":clima");
+        System.out.println(tipoClima);
         Set<String> localizaciones = locationRecommendationService.obtenerLocalizacionesPorTipoClima(tipoClima);
-        StringBuilder htmlResponse = new StringBuilder("<html><body><h1>Localizaciones para el clima " + tipoClima + "</h1><ul>");
-        for (String localizacion : localizaciones) {
-            htmlResponse.append("<li>").append(localizacion).append("</li>");
-        }
-        htmlResponse.append("</ul></body></html>");
-        return htmlResponse.toString();
+        System.out.println(localizaciones);
+        return new Gson().toJson(localizaciones);
     }
 
     private String getOfertaMasBarata(Request request, Response response) {
-        response.type("text/html");
+        response.type("application/json");
         String localizacion = request.params(":localizacion");
         String fechaReserva = request.params(":fecha");
         double tarifaMasBarata = locationRecommendationService.obtenerTarifaMasBarata(localizacion, fechaReserva);
 
-        return "<html><body><h1>Oferta Más Barata</h1><p>Localización: " + localizacion +
-                "<br>Fecha de Reserva: " + fechaReserva +
-                "<br>Tarifa Más Barata: " + tarifaMasBarata + "</p></body></html>";
+        return new Gson().toJson(new Oferta(localizacion, fechaReserva, tarifaMasBarata));
     }
 }
