@@ -3,6 +3,11 @@ package org.ulpgc.dacd.control;
 import org.ulpgc.dacd.control.exceptions.StoreException;
 import org.ulpgc.dacd.model.Location;
 import org.ulpgc.dacd.model.Weather;
+
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
@@ -47,15 +52,52 @@ public class WeatherController {
     }
 
     private static List<Location> loadLocations() {
+        List<String> lines = readLinesFromFile("locations.tsv");
+        return parseLinesToLocations(lines);
+    }
+
+    private static List<String> readLinesFromFile(String filename) {
+        List<String> lines = new ArrayList<>();
+        try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                lines.add(line);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return lines;
+    }
+
+    private static List<Location> parseLinesToLocations(List<String> lines) {
         List<Location> locations = new ArrayList<>();
-        locations.add(new Location("Gran Canaria", 28.11, -15.43));
-        locations.add(new Location("Tenerife", 28.46, -16.25));
-        locations.add(new Location("La Gomera", 28.09, -17.1));
-        locations.add(new Location("La Palma", 28.68, -17.76));
-        locations.add(new Location("El Hierro", 27.64, -17.98));
-        locations.add(new Location("Fuerteventura", 28.49, -13.86));
-        locations.add(new Location("Lanzarote", 28.96, -13.55));
-        locations.add(new Location("La Graciosa", 29.23, -13.5));
+        for (String line : lines) {
+            Location location = parseLineToLocation(line);
+            if (location != null) {
+                locations.add(location);
+            }
+        }
+        System.out.println(locations);
         return locations;
+    }
+
+    private static Location parseLineToLocation(String line) {
+        String[] parts = line.split("\t");
+        if (parts.length >= 3) {
+            String name = parts[0];
+            double latitude = parseDouble(parts[1]);
+            double longitude = parseDouble(parts[2]);
+            return new Location(name, latitude, longitude);
+        }
+        return null;
+    }
+
+    private static double parseDouble(String value) {
+        try {
+            return Double.parseDouble(value);
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+            return 0.0;
+        }
     }
 }
