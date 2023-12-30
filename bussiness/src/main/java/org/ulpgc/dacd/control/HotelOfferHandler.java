@@ -2,27 +2,27 @@ package org.ulpgc.dacd.control;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.ulpgc.dacd.model.HotelPriceNode;
+import org.ulpgc.dacd.model.HotelOfferNode;
 import org.ulpgc.dacd.model.Modelo;
 
-public class HotelHandler implements Handler {
+public class HotelOfferHandler implements Handler {
     private final Modelo modelo;
 
-    public HotelHandler(Modelo modelo) {
+    public HotelOfferHandler(Modelo modelo) {
         this.modelo = modelo;
     }
 
     @Override
     public void handleEvent(String eventData) {
         try {
-            HotelPriceNode hotelNode = parseHotelEvent(eventData);
+            HotelOfferNode hotelNode = parseHotelEvent(eventData);
             updateModelWithHotelNode(hotelNode);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private HotelPriceNode parseHotelEvent(String eventData) {
+    private HotelOfferNode parseHotelEvent(String eventData) {
         JsonObject hotelEventJson = parseJson(eventData);
         String companyName = hotelEventJson.get("name").getAsString();
         double tax = hotelEventJson.get("rate").getAsDouble();
@@ -32,12 +32,11 @@ public class HotelHandler implements Handler {
         String predictionTime = hotelEventJson.get("predictionTime").getAsString();
 
         // Asegurarse de que la asignación de ubicación se realice correctamente
-        System.out.println(locationName);
-        return new HotelPriceNode(hotelName, tax, locationName, predictionTime);
+        return new HotelOfferNode(hotelName, companyName ,tax, locationName, predictionTime);
     }
 
 
-    private void updateModelWithHotelNode(HotelPriceNode hotelNode) {
+    private void updateModelWithHotelNode(HotelOfferNode hotelNode) {
         modelo.updateHotelNode(hotelNode);
     }
 

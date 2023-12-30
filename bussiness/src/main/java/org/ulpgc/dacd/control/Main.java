@@ -5,6 +5,7 @@ import org.ulpgc.dacd.model.Modelo;
 import org.ulpgc.dacd.view.HotelRecommendationAPI;
 
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
@@ -37,7 +38,7 @@ public class Main {
         HandlerFactory handlerFactory = new HandlerFactory(modelo);
 
         WeatherHandler weatherHandler = new WeatherHandler(modelo);
-        HotelHandler hotelHandler = new HotelHandler(modelo);
+        HotelOfferHandler hotelHandler = new HotelOfferHandler(modelo);
 
         topicSubscriber.registerHandler("prediction.Weather", weatherHandler);
         topicSubscriber.registerHandler("prediction.Hotel", hotelHandler);

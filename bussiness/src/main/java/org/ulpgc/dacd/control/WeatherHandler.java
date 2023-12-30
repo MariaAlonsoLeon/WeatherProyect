@@ -9,6 +9,9 @@ import org.ulpgc.dacd.model.WeatherType;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 public class WeatherHandler implements Handler {
     private final Modelo modelo;
     private final LocationRecommendationService locationRecommendationService;
@@ -30,8 +33,9 @@ public class WeatherHandler implements Handler {
 
     private WeatherNode parseWeatherEvent(String eventData) {
         JsonObject weatherEventJson = parseJson(eventData);
-
         String predictionTime = weatherEventJson.get("predictionTime").getAsString();
+        LocalDateTime dateTime = LocalDateTime.parse(predictionTime, DateTimeFormatter.ISO_DATE_TIME);
+        String formattedDate = dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         JsonObject locationJson = weatherEventJson.getAsJsonObject("location");
         String locationName = locationJson.get("name").getAsString();
         int humidity = weatherEventJson.get("humidity").getAsInt();
@@ -39,7 +43,9 @@ public class WeatherHandler implements Handler {
         int clouds = weatherEventJson.get("clouds").getAsInt();
         float rain = weatherEventJson.get("rain").getAsFloat();
         WeatherType weatherType = locationRecommendationService.determineWeatherType(temperature, rain, clouds);
-        return new WeatherNode(predictionTime, locationName, humidity, temperature, clouds, rain, weatherType);
+
+        // Utiliza la fecha formateada en lugar de la original
+        return new WeatherNode(formattedDate, locationName, humidity, temperature, clouds, rain, weatherType);
     }
 
     private void updateModelWithWeatherNode(WeatherNode weatherNode) {

@@ -12,7 +12,7 @@ public class HandlerFactory {
     public HandlerFactory(Modelo modelo) {
         this.modelo = modelo;
         handlers.put("prediction.Weather", () -> new WeatherHandler(modelo));
-        handlers.put("prediction.Hotel", () -> new HotelHandler(modelo));
+        handlers.put("prediction.Hotel", () -> new HotelOfferHandler(modelo));
     }
 
     public Handler create(String type) {

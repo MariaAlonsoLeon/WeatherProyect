@@ -49,7 +49,7 @@ public class CommandLineInterface {
         }
 
         System.out.println("=== Localizaciones con Clima " + tipoClimaElegido + " ===");
-        Set<String> listaDeLocalizaciones = locationRecommendationService.obtenerLocalizacionesPorTipoClima(tipoClimaElegido);
+        Set<String> listaDeLocalizaciones = locationRecommendationService.getLocationsByWeatherType(tipoClimaElegido, "2023-12-31");
 
         if (listaDeLocalizaciones.isEmpty()) {
             System.out.println("No hay localizaciones con el tipo de clima seleccionado.");
@@ -76,7 +76,7 @@ public class CommandLineInterface {
         }
 
         System.out.println("=== Oferta Más Barata para " + localizacionElegida + " ===");
-        double tarifaMasBarata = locationRecommendationService.obtenerTarifaMasBarata(localizacionElegida, fechaReserva);
+        double tarifaMasBarata = locationRecommendationService.getCheapestRate(localizacionElegida, fechaReserva);
         System.out.println("Localización: " + localizacionElegida + ", Fecha de Reserva: " + fechaReserva + ", Tarifa Más Barata: " + tarifaMasBarata);
     }
 

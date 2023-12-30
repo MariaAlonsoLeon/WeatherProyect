@@ -18,11 +18,8 @@ public class HotelRecommendationAPI {
     }
 
     public void init() {
-        //Spark.debugDebug(true); // Activa el modo de depuración de Spark
+        staticFiles.location("/public");
 
-        staticFiles.location("/public"); // Permite servir archivos estáticos desde la carpeta /public
-
-        // Definir rutas
         get("/climas", (req, res) -> {
             try {
                 return getTiposClima(req, res);
@@ -33,17 +30,7 @@ public class HotelRecommendationAPI {
             }
         });
 
-        /*get("/localizaciones/:clima", (req, res) -> {
-            try {
-                return getLocalizaciones(req, res);
-            } catch (Exception e) {
-                e.printStackTrace();
-                res.status(500);
-                return "Error interno del servidor: " + e.getMessage();
-            }
-        });*/
-
-        get("/localizaciones/:clima", (req, res) -> {
+        get("/localizaciones", (req, res) -> {
             try {
                 return getLocalizaciones(req, res);
             } catch (Exception e) {
@@ -71,10 +58,9 @@ public class HotelRecommendationAPI {
 
     private String getLocalizaciones(Request request, Response response) {
         response.type("application/json");
-        String tipoClima = request.params(":clima");
-        System.out.println(tipoClima);
-        Set<String> localizaciones = locationRecommendationService.obtenerLocalizacionesPorTipoClima(tipoClima);
-        System.out.println(localizaciones);
+        String tipoClima = request.queryParams("clima");
+        String fecha = request.queryParams("fecha");
+        Set<String> localizaciones = locationRecommendationService.getLocationsByWeatherType(tipoClima, fecha);
         return new Gson().toJson(localizaciones);
     }
 
@@ -82,8 +68,8 @@ public class HotelRecommendationAPI {
         response.type("application/json");
         String localizacion = request.params(":localizacion");
         String fechaReserva = request.params(":fecha");
-        double tarifaMasBarata = locationRecommendationService.obtenerTarifaMasBarata(localizacion, fechaReserva);
+        double tarifaMasBarata = locationRecommendationService.getCheapestRate(localizacion, fechaReserva);
 
-        return new Gson().toJson(new Oferta(localizacion, fechaReserva, tarifaMasBarata));
+        return new Gson().toJson(new Offer(localizacion, fechaReserva, tarifaMasBarata));
     }
 }

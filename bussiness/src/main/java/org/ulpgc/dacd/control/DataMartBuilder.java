@@ -1,18 +1,8 @@
 package org.ulpgc.dacd.control;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-
-import org.ulpgc.dacd.model.HotelPriceNode;
 import org.ulpgc.dacd.model.Modelo;
-import org.ulpgc.dacd.model.WeatherNode;
-import org.ulpgc.dacd.model.WeatherType;
-import org.ulpgc.dacd.model.LocationNode;
-
-import java.util.List;
 
 public class DataMartBuilder {
     private final Modelo modelo;
@@ -40,7 +30,7 @@ public class DataMartBuilder {
 
     private void processHotelData(List<String> hotelData) {
         for (String data : hotelData) {
-            HotelHandler hotelHandler = new HotelHandler(modelo);
+            HotelOfferHandler hotelHandler = new HotelOfferHandler(modelo);
             hotelHandler.handleEvent(data);
         }
     }
