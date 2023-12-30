@@ -1,8 +1,6 @@
 package org.ulpgc.dacd.model;
 
-import java.util.List;
-
-public record Location(String name, String hotelName, double lat, double lon,  String apiHotelsToken) {
+public record Location(String name, String hotelName, double lat, double lon,  String hotelKey) {
 
     @Override
     public String toString() {
@@ -10,7 +8,7 @@ public record Location(String name, String hotelName, double lat, double lon,  S
                 "name='" + name + '\'' +
                 ", lat=" + lat +
                 ", lon=" + lon +
-                ", apiHotelsToken='" + apiHotelsToken + '\'' +
+                ", apiHotelsToken='" + hotelKey + '\'' +
                 '}';
     }
 }

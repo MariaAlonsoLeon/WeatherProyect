@@ -43,9 +43,9 @@ public class HotelOfferController {
         List<String> dates = generateDateList();
         try{
             for (Location location : locations) {
-                for (HotelOffer hotelTax : hotelPricesSupplier.getHotelTaxes(location, dates)) {
-                    System.out.println(hotelTax);
-                    hotelStore.save(hotelTax);
+                for (HotelOffer hotelOffer : hotelPricesSupplier.getHotelOffers(location, dates)) {
+                    System.out.println(hotelOffer);
+                    hotelStore.save(hotelOffer);
                 }
             }
         } catch (StoreException e){

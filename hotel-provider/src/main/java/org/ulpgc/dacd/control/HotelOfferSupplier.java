@@ -6,5 +6,5 @@ import org.ulpgc.dacd.model.Location;
 import java.util.List;
 
 public interface HotelOfferSupplier {
-    List<HotelOffer> getHotelTaxes(Location location, List<String> dates);
+    List<HotelOffer> getHotelOffers(Location location, List<String> dates);
 }

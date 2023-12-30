@@ -25,14 +25,14 @@ public class XoteloHotelOfferSupplier implements HotelOfferSupplier {
     }
 
     @Override
-    public List<HotelOffer> getHotelTaxes(Location location, List<String> dates) {
-        List<HotelOffer> hotelTaxesList = new ArrayList<>();
+    public List<HotelOffer> getHotelOffers(Location location, List<String> dates) {
+        List<HotelOffer> hotelOffersList = new ArrayList<>();
         for (String currentDate : dates) {
-            String url = buildUrl(location.apiHotelsToken(), currentDate);
+            String url = buildUrl(location.hotelKey(), currentDate);
             System.out.println(url);
-            hotelTaxesList.addAll(parseHotelTaxes(url, location, currentDate));
+            hotelOffersList.addAll(parseHotelOffers(url, location, currentDate));
         }
-        return hotelTaxesList;
+        return hotelOffersList;
     }
 
     private String buildUrl(String hotelToken, String currentDate) {
@@ -40,9 +40,9 @@ public class XoteloHotelOfferSupplier implements HotelOfferSupplier {
         return String.format("%s?hotel_key=%s&chk_in=%s&chk_out=%s&currency=EUR", apiUrl, hotelToken, tomorrowDate, currentDate);
     }
 
-    private List<HotelOffer> parseHotelTaxes(String url, Location location, String predictionTime) {
+    private List<HotelOffer> parseHotelOffers(String url, Location location, String predictionTime) {
         try {
-            String jsonData = getHotelTaxFromUrl(url);
+            String jsonData = getHotelOfferFromUrl(url);
             JsonObject jsonObject = JsonParser.parseString(jsonData).getAsJsonObject();
             JsonObject result = jsonObject.getAsJsonObject("result");
             JsonArray rates = result.getAsJsonArray("rates");
@@ -54,15 +54,15 @@ public class XoteloHotelOfferSupplier implements HotelOfferSupplier {
     }
 
     private List<HotelOffer> createHotelTaxList(JsonArray rates, Location location, String predictionTime) {
-        List<HotelOffer> hotelTaxesList = new ArrayList<>();
+        List<HotelOffer> hotelOffersList = new ArrayList<>();
         for (int i = 0; i < rates.size(); i++) {
             JsonObject rate = rates.get(i).getAsJsonObject();
-            HotelOffer hotelTaxes = createHotel(rate, location, predictionTime);
-            if (hotelTaxes != null) {
-                hotelTaxesList.add(hotelTaxes);
+            HotelOffer hotelOffers = createHotel(rate, location, predictionTime);
+            if (hotelOffers != null) {
+                hotelOffersList.add(hotelOffers);
             }
         }
-        return hotelTaxesList;
+        return hotelOffersList;
     }
 
     private HotelOffer createHotel(JsonObject rate, Location location, String predictionTime) {
@@ -72,12 +72,12 @@ public class XoteloHotelOfferSupplier implements HotelOfferSupplier {
             float tax = rate.has("tax") ? rate.get("tax").getAsFloat() : 0.0f;
             return new HotelOffer(name, rateValue + tax, location, predictionTime);
         } catch (Exception e) {
-            handleException("Error creating HotelTaxes object", e);
+            handleException("Error creating HotelOffers object", e);
             return null;
         }
     }
 
-    private String getHotelTaxFromUrl(String url) throws IOException {
+    private String getHotelOfferFromUrl(String url) throws IOException {
         Document document = Jsoup.connect(url).ignoreContentType(true).get();
         return document.text();
     }

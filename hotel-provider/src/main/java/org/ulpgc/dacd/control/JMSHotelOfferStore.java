@@ -20,13 +20,13 @@ public class JMSHotelOfferStore implements HotelOfferStore {
     }
 
     @Override
-    public void save(HotelOffer hotelTax) throws StoreException {
+    public void save(HotelOffer hotelOffer) throws StoreException {
         try (Connection connection = createConnection()) {
             connection.setClientID(clientId);
             connection.start();
             Session session = createSession(connection);
             Topic topic = createTopic(session);
-            String jsonMessage = hotelTaxToJson(hotelTax);
+            String jsonMessage = hotelOfferToJson(hotelOffer);
             sendMessageToTopic(session, topic, jsonMessage);
         } catch (JMSException e) {
             throw new StoreException(e.getMessage());
@@ -61,9 +61,9 @@ public class JMSHotelOfferStore implements HotelOfferStore {
         System.out.println("Message sent to the queue: " + jsonMessage);
     }
 
-    private String hotelTaxToJson(HotelOffer hotelTax) {
+    private String hotelOfferToJson(HotelOffer hotelOffer) {
         Gson gson = prepareGson();
-        return gson.toJson(hotelTax);
+        return gson.toJson(hotelOffer);
     }
 
     private Gson prepareGson() {
