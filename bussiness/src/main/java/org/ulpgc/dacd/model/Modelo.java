@@ -3,9 +3,6 @@ package org.ulpgc.dacd.model;
 import org.neo4j.driver.*;
 import org.neo4j.driver.Record;
 
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -16,43 +13,40 @@ public class Modelo implements AutoCloseable {
         this.driver = GraphDatabase.driver(uri, AuthTokens.basic(user, password));
     }
 
-
-    public void updateHotelNode(HotelPriceNode hotelNode) {
-        System.out.println("Hola " + hotelNode.locationName());
+    public void updateHotelNode(HotelOfferNode hotelNode) {
         try (Session session = driver.session()) {
             session.writeTransaction(tx -> {
-                // Crear o actualizar nodos y relaciones según la lógica de tu aplicación
-                tx.run("MERGE (h:Hotel {name: $name}) " +
-                                "MERGE (l:Location {locationName: $location}) " +
-                                "MERGE (d:Date {date: $date}) " +
-                                "MERGE (h)-[:AT]->(l) " +
-                                "MERGE (l)-[:HAS_HOTEL]->(d) " +
-                                //"MERGE (h)-[:OFFERS]->(d) " +
-                                "SET h.tax = $tax",
+                tx.run("MERGE (h:Hotel {nombre: $hotelName}) " +
+                                "MERGE (d:Fecha {valor: $date}) " +
+                                "MERGE (h)-[:SE_ENCUENTRA_EN]->(l: Ubicacion {nombre: $location}) " +
+                                "MERGE (h)-[:OFRECE]->(o:Oferta {companyName: $companyName})-[:EN_FECHA]->(d) " +
+                                "ON CREATE SET o.tax = $tax " +
+                                "ON MATCH SET o.tax = $tax",
                         Values.parameters(
-                                "name", hotelNode.name(),
-                                "location", hotelNode.locationName(),
+                                "hotelName", hotelNode.name(),
                                 "date", hotelNode.predictionTime(),
-                                "tax", hotelNode.tax()
+                                "tax", hotelNode.tax(),
+                                "companyName", hotelNode.companyName(),
+                                "location", hotelNode.locationName()
                         ));
                 return null;
             });
         }
     }
+
     public void updateWeatherNode(WeatherNode weatherNode) {
         try (Session session = driver.session()) {
             session.writeTransaction(tx -> {
-                // Crear o actualizar nodos y relaciones según la lógica de tu aplicación
-                tx.run("MERGE (l:Location {name: $location}) " +
-                                "MERGE (d:Date {date: $date}) " +
-                                "MERGE (l)-[:HAS_FORECAST]->(d) " +
-                                "SET l.humidity = $humidity, l.temperature = $temperature, " +
-                                "l.clouds = $clouds, l.rain = $rain, l.weatherType = $weatherType",
+                tx.run("MERGE (l:Ubicacion {nombre: $location}) " +
+                                "MERGE (d:Fecha {valor: $date}) " +
+                                "MERGE (l)-[:TIENE_PREVISION]->(w:Weather)-[:EN_FECHA]->(d) " +
+                                "ON CREATE SET w.weatherType = $weatherType, w.clouds = $clouds, w.rain = $rain, w.temperature = $temperature, w.humidity = $humidity " +
+                                "ON MATCH SET w.weatherType = $weatherType, w.clouds = $clouds, w.rain = $rain, w.temperature = $temperature, w.humidity = $humidity",
                         Values.parameters(
                                 "location", weatherNode.location(),
                                 "date", weatherNode.predictionTime(),
-                                "humidity", weatherNode.humidity(),
                                 "temperature", weatherNode.temperature(),
+                                "humidity", weatherNode.humidity(),
                                 "clouds", weatherNode.clouds(),
                                 "rain", weatherNode.rainProbability(),
                                 "weatherType", weatherNode.weatherType().toString()
@@ -61,10 +55,32 @@ public class Modelo implements AutoCloseable {
             });
         }
     }
-    public Set<String> obtenerLocalizacionesPorTipoClima(String weatherType) {
+    public void updateOfferNode(OfferNode offerNode) {
         try (Session session = driver.session()) {
-            Result result = session.run("MATCH (l:Location)-[:HAS_FORECAST]->(d:Date) WHERE l.weatherType = $weatherType RETURN l.name AS Location", Values.parameters("weatherType", weatherType));
-            Set<String> localizaciones = new HashSet<>();  // Utilizamos un Set para evitar duplicados
+            session.writeTransaction(tx -> {
+                tx.run("MERGE (h:Hotel {name: $hotelName}) " +
+                                "MERGE (l:Ubicacion {nombre: $location}) " +
+                                "MERGE (d:Fecha {valor: $date}) " +
+                                "MERGE (h)-[:SE_ENCUENTRA_EN]->(l) " +
+                                "MERGE (h)-[:OFRECE]->(o:Oferta {companyName: $companyName})-[:EN_FECHA]->(d) " +
+                                "ON CREATE SET o.precio_por_noche = $tax " +
+                                "ON MATCH SET o.precio_por_noche = $tax",
+                        Values.parameters(
+                                "hotelName", offerNode.hotelName(),
+                                "location", offerNode.locationName(),
+                                "date", offerNode.predictionTime(),
+                                "tax", offerNode.tax(),
+                                "companyName", offerNode.companyName()
+                        ));
+                return null;
+            });
+        }
+    }
+
+    public Set<String> obtenerLocalizacionesPorTipoClima(String weatherType, String predictionTime) {
+        try (Session session = driver.session()) {
+            Result result = session.run("MATCH (l:Ubicacion)-[:TIENE_PREVISION]->(w:Weather)-[:EN_FECHA]->(d:Fecha {valor: $predictionTime}) WHERE w.weatherType = $weatherType RETURN l.nombre AS Location", Values.parameters("weatherType", weatherType, "predictionTime", predictionTime));
+            Set<String> localizaciones = new HashSet<>();
             while (result.hasNext()) {
                 Record record = result.next();
                 localizaciones.add(record.get("Location").asString());
@@ -73,47 +89,24 @@ public class Modelo implements AutoCloseable {
         }
     }
 
-
-    /*public double obtenerTarifaMasBarata(String locationName, String predictionTime) {
-        try (Session session = driver.session()) {
-            Result result = session.run(
-                    "MATCH (h:Hotel)-[:AT]->(l:Location {locationName: $location})-[:OFFERS]->(d:Date {date: $predictionTime}) " +
-                            "RETURN h.name AS hotelName, MIN(h.tax) AS minTax",
-                    Values.parameters("location", locationName, "predictionTime", predictionTime));
-
-            if (result.hasNext()) {
-                Record record = result.single();  // Utiliza .single() para obtener un solo registro
-                if (record != null && !record.get("minTax").isNull()) {
-                    return record.get("minTax").asDouble();
-                }
-            }
-        }
-        return Double.MAX_VALUE;  // Valor predeterminado si no se encuentra ninguna tarifa
-    }*/
     public double obtenerTarifaMasBarata(String locationName, String predictionTime) {
         try (Session session = driver.session()) {
             Result result = session.run(
-                    "MATCH (h:Hotel)-[:AT]->(l:Location {locationName: $location})-[:HAS_HOTEL]->(d:Date {date: $predictionTime}) " +
-                            "RETURN h.name AS hotelName, MIN(h.tax) AS minTax",
-                    Values.parameters("location", locationName, "predictionTime", predictionTime));
-
-            if (result.hasNext()) {
-                Record record = result.single();
-                if (record != null && !record.get("minTax").isNull()) {
-                    return record.get("minTax").asDouble();
-                }
-            }
+                    "MATCH (h:Hotel)-[:SE_ENCUENTRA_EN]->(l:Ubicacion {nombre: $location}) " +
+                            "MATCH (o:Oferta)-[:EN_FECHA]->(d:Fecha {valor: $predictionTime}) " +
+                            "MATCH (h)-[:OFRECE]->(o)-[:EN_FECHA]->(d) " +
+                            "RETURN MIN(o.tax) AS tax",
+                    Values.parameters("location", locationName, "predictionTime", predictionTime)
+            );
+            return result.single().get("tax", 0.0);
         }
-        return Double.MAX_VALUE;
     }
-
 
     @Override
     public void close() {
         try {
             driver.close();
         } catch (Exception e) {
-            // Manejar cualquier excepción que pueda ocurrir al cerrar la conexión
             e.printStackTrace();
         }
     }
@@ -126,4 +119,5 @@ public class Modelo implements AutoCloseable {
             });
         }
     }
+
 }
