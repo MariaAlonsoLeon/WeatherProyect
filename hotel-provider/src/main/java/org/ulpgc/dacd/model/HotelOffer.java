@@ -2,7 +2,7 @@ package org.ulpgc.dacd.model;
 
 import java.time.Instant;
 
-public class HotelTax {
+public class HotelOffer {
     private String ss;
     private Instant ts;
     private String predictionTime;
@@ -11,7 +11,7 @@ public class HotelTax {
     private Location location;
 
 
-    public HotelTax(String name, float rate, Location location, String predictionTime) {
+    public HotelOffer(String name, float rate, Location location, String predictionTime) {
         this.ss = "hotel-provider";
         this.ts = Instant.now();
         this.name = name;

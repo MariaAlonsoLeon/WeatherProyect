@@ -3,9 +3,9 @@ package org.ulpgc.dacd.control;
 public class Main {
 
     public static void main(String[] args) {
-        HotelTaxSupplier hotelSupplier = new XoteloHotelTaxSupplier("https://data.xotelo.com/api/rates");
-        HotelTaxStore hotelStore = new JMSHotelTaxStore("tcp://localhost:61616", "prediction.Hotel", "PredictionProvider");
-        HotelTaxController weatherController = new HotelTaxController(hotelSupplier, hotelStore);
+        HotelOfferSupplier hotelSupplier = new XoteloHotelOfferSupplier("https://data.xotelo.com/api/rates");
+        HotelOfferStore hotelStore = new JMSHotelOfferStore("tcp://localhost:61616", "prediction.Hotel", "hotel-provider");
+        HotelOfferController weatherController = new HotelOfferController(hotelSupplier, hotelStore);
         weatherController.execute();
     }
 }

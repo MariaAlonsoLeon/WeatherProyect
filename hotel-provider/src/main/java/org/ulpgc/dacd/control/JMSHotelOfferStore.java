@@ -3,24 +3,24 @@ package org.ulpgc.dacd.control;
 import com.google.gson.*;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.ulpgc.dacd.control.exceptions.StoreException;
-import org.ulpgc.dacd.model.HotelTax;
+import org.ulpgc.dacd.model.HotelOffer;
 import javax.jms.*;
 import java.time.Instant;
 
-public class JMSHotelTaxStore implements HotelTaxStore {
+public class JMSHotelOfferStore implements HotelOfferStore {
 
     private final String topicName;
     private final String brokerUrl;
     private final String clientId;
 
-    public JMSHotelTaxStore(String brokerUrl, String topicName, String clientId) {
+    public JMSHotelOfferStore(String brokerUrl, String topicName, String clientId) {
         this.brokerUrl = brokerUrl;
         this.topicName = topicName;
         this.clientId = clientId;
     }
 
     @Override
-    public void save(HotelTax hotelTax) throws StoreException {
+    public void save(HotelOffer hotelTax) throws StoreException {
         try (Connection connection = createConnection()) {
             connection.setClientID(clientId);
             connection.start();
@@ -61,7 +61,7 @@ public class JMSHotelTaxStore implements HotelTaxStore {
         System.out.println("Message sent to the queue: " + jsonMessage);
     }
 
-    private String hotelTaxToJson(HotelTax hotelTax) {
+    private String hotelTaxToJson(HotelOffer hotelTax) {
         Gson gson = prepareGson();
         return gson.toJson(hotelTax);
     }

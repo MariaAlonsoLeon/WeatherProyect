@@ -5,7 +5,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.ulpgc.dacd.model.HotelTax;
+import org.ulpgc.dacd.model.HotelOffer;
 import org.ulpgc.dacd.model.Location;
 
 import java.io.IOException;
@@ -16,19 +16,20 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class XoteloHotelTaxSupplier implements HotelTaxSupplier {
+public class XoteloHotelOfferSupplier implements HotelOfferSupplier {
     private final String apiUrl;
-    private static final Logger logger = Logger.getLogger(XoteloHotelTaxSupplier.class.getName());
+    private static final Logger logger = Logger.getLogger(XoteloHotelOfferSupplier.class.getName());
 
-    public XoteloHotelTaxSupplier(String apiUrl) {
+    public XoteloHotelOfferSupplier(String apiUrl) {
         this.apiUrl = apiUrl;
     }
 
     @Override
-    public List<HotelTax> getHotelTaxes(Location location, List<String> dates) {
-        List<HotelTax> hotelTaxesList = new ArrayList<>();
+    public List<HotelOffer> getHotelTaxes(Location location, List<String> dates) {
+        List<HotelOffer> hotelTaxesList = new ArrayList<>();
         for (String currentDate : dates) {
             String url = buildUrl(location.apiHotelsToken(), currentDate);
+            System.out.println(url);
             hotelTaxesList.addAll(parseHotelTaxes(url, location, currentDate));
         }
         return hotelTaxesList;
@@ -39,7 +40,7 @@ public class XoteloHotelTaxSupplier implements HotelTaxSupplier {
         return String.format("%s?hotel_key=%s&chk_in=%s&chk_out=%s&currency=EUR", apiUrl, hotelToken, tomorrowDate, currentDate);
     }
 
-    private List<HotelTax> parseHotelTaxes(String url, Location location, String predictionTime) {
+    private List<HotelOffer> parseHotelTaxes(String url, Location location, String predictionTime) {
         try {
             String jsonData = getHotelTaxFromUrl(url);
             JsonObject jsonObject = JsonParser.parseString(jsonData).getAsJsonObject();
@@ -52,11 +53,11 @@ public class XoteloHotelTaxSupplier implements HotelTaxSupplier {
         }
     }
 
-    private List<HotelTax> createHotelTaxList(JsonArray rates, Location location, String predictionTime) {
-        List<HotelTax> hotelTaxesList = new ArrayList<>();
+    private List<HotelOffer> createHotelTaxList(JsonArray rates, Location location, String predictionTime) {
+        List<HotelOffer> hotelTaxesList = new ArrayList<>();
         for (int i = 0; i < rates.size(); i++) {
             JsonObject rate = rates.get(i).getAsJsonObject();
-            HotelTax hotelTaxes = createHotel(rate, location, predictionTime);
+            HotelOffer hotelTaxes = createHotel(rate, location, predictionTime);
             if (hotelTaxes != null) {
                 hotelTaxesList.add(hotelTaxes);
             }
@@ -64,12 +65,12 @@ public class XoteloHotelTaxSupplier implements HotelTaxSupplier {
         return hotelTaxesList;
     }
 
-    private HotelTax createHotel(JsonObject rate, Location location, String predictionTime) {
+    private HotelOffer createHotel(JsonObject rate, Location location, String predictionTime) {
         try {
             String name = rate.get("name").getAsString();
             float rateValue = rate.get("rate").getAsFloat();
             float tax = rate.has("tax") ? rate.get("tax").getAsFloat() : 0.0f;
-            return new HotelTax(name, rateValue + tax, location, predictionTime);
+            return new HotelOffer(name, rateValue + tax, location, predictionTime);
         } catch (Exception e) {
             handleException("Error creating HotelTaxes object", e);
             return null;
