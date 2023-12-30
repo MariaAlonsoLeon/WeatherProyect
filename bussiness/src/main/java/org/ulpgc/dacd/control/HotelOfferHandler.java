@@ -30,8 +30,6 @@ public class HotelOfferHandler implements Handler {
         String locationName = locationJson.get("name").getAsString();
         String hotelName = locationJson.get("hotelName").getAsString();
         String predictionTime = hotelEventJson.get("predictionTime").getAsString();
-
-        // Asegurarse de que la asignación de ubicación se realice correctamente
         return new HotelOfferNode(hotelName, companyName ,tax, locationName, predictionTime);
     }
 

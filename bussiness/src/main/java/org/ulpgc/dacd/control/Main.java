@@ -59,45 +59,13 @@ public class Main {
         //CommandLineInterface cli = new CommandLineInterface(new LocationRecommendationService(modelo));
         //cli.iniciar();
 
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            logger.info("Cerrando la aplicación. Limpiando datos del grafo...");
+            modelo.clearGraph();
+            logger.info("Datos del grafo limpiados.");
+        }));
+
         executorService.shutdown();
         //modelo.limpiarGrafo();
-
-
-        /*try (Modelo modelo = new Modelo(neo4jUri, neo4jUser, neo4jPassword)) {
-            DataLakeAccessor dataLakeAccessor = new DataLakeAccessor(dataLakeDirectory);
-            DataMartBuilder dataMartBuilder = new DataMartBuilder(modelo, dataLakeAccessor);
-            // Llamada a buildDataMart si es necesario
-            dataMartBuilder.buildDataMart();
-
-            TopicSubscriber topicSubscriber = new TopicSubscriber(brokerUrl, List.of("prediction.Weather", "prediction.Hotel"), "clientId");
-            HandlerFactory handlerFactory = new HandlerFactory(modelo);
-
-            WeatherHandler weatherHandler = new WeatherHandler(modelo);
-            HotelHandler hotelHandler = new HotelHandler(modelo);
-
-            topicSubscriber.registerHandler("prediction.Weather", weatherHandler);
-            topicSubscriber.registerHandler("prediction.Hotel", hotelHandler);
-
-            HotelRecommendationAPI hotelAPI = new HotelRecommendationAPI(new LocationRecommendationService(modelo));
-            hotelAPI.init();
-
-            ExecutorService executorService = Executors.newSingleThreadExecutor();
-            executorService.submit(() -> {
-                try {
-                    topicSubscriber.start();
-                } catch (EventReceiverException e) {
-                    logger.log(Level.SEVERE, "Error starting TopicSubscriber", e);
-                }
-            });
-
-            // Agregar las siguientes líneas para probar la interfaz de usuario
-            //CommandLineInterface cli = new CommandLineInterface(new LocationRecommendationService(modelo));
-            //cli.iniciar();
-
-            executorService.shutdown();
-            //modelo.limpiarGrafo();
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, "Error during execution", e);
-        }*/
     }
 }

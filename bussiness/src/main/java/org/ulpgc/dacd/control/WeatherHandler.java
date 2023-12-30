@@ -33,9 +33,7 @@ public class WeatherHandler implements Handler {
 
     private WeatherNode parseWeatherEvent(String eventData) {
         JsonObject weatherEventJson = parseJson(eventData);
-        String predictionTime = weatherEventJson.get("predictionTime").getAsString();
-        LocalDateTime dateTime = LocalDateTime.parse(predictionTime, DateTimeFormatter.ISO_DATE_TIME);
-        String formattedDate = dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        String formattedDate = extractAndFormatDate(weatherEventJson);
         JsonObject locationJson = weatherEventJson.getAsJsonObject("location");
         String locationName = locationJson.get("name").getAsString();
         int humidity = weatherEventJson.get("humidity").getAsInt();
@@ -43,11 +41,14 @@ public class WeatherHandler implements Handler {
         int clouds = weatherEventJson.get("clouds").getAsInt();
         float rain = weatherEventJson.get("rain").getAsFloat();
         WeatherType weatherType = locationRecommendationService.determineWeatherType(temperature, rain, clouds);
-
-        // Utiliza la fecha formateada en lugar de la original
         return new WeatherNode(formattedDate, locationName, humidity, temperature, clouds, rain, weatherType);
     }
 
+    public String extractAndFormatDate(JsonObject weatherEventJson){
+        String predictionTime = weatherEventJson.get("predictionTime").getAsString();
+        LocalDateTime dateTime = LocalDateTime.parse(predictionTime, DateTimeFormatter.ISO_DATE_TIME);
+        return dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+    }
     private void updateModelWithWeatherNode(WeatherNode weatherNode) {
         modelo.updateWeatherNode(weatherNode);
     }
