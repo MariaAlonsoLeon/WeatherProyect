@@ -16,18 +16,13 @@ public class Modelo implements AutoCloseable {
     public void updateHotelNode(HotelOfferNode hotelNode) {
         try (Session session = driver.session()) {
             session.writeTransaction(tx -> {
-                tx.run("MERGE (h:Hotel {nombre: $hotelName}) " +
-                                "MERGE (d:Fecha {valor: $date}) " +
-                                "MERGE (h)-[:SE_ENCUENTRA_EN]->(l: Ubicacion {nombre: $location}) " +
+                tx.run("MERGE (h:Hotel {nombre: $hotelName}) MERGE (d:Fecha {valor: $date}) " +
+                                "MERGE (l:Ubicacion {nombre: $location}) MERGE (h)-[:SE_ENCUENTRA_EN]->(l) " +
                                 "MERGE (h)-[:OFRECE]->(o:Oferta {companyName: $companyName})-[:EN_FECHA]->(d) " +
-                                "ON CREATE SET o.tax = $tax " +
-                                "ON MATCH SET o.tax = $tax",
+                                "ON CREATE SET o.tax = $tax ON MATCH SET o.tax = $tax",
                         Values.parameters(
-                                "hotelName", hotelNode.name(),
-                                "date", hotelNode.predictionTime(),
-                                "tax", hotelNode.tax(),
-                                "companyName", hotelNode.companyName(),
-                                "location", hotelNode.locationName()
+                                "hotelName", hotelNode.name(), "date", hotelNode.predictionTime(),
+                                "tax", hotelNode.tax(), "companyName", hotelNode.companyName(), "location", hotelNode.locationName()
                         ));
                 return null;
             });
@@ -35,42 +30,17 @@ public class Modelo implements AutoCloseable {
     }
 
     public void updateWeatherNode(WeatherNode weatherNode) {
+        String params = "w.weatherType = $weatherType, w.clouds = $clouds, w.rain = $rain, w.temperature = $temperature, w.humidity = $humidity";
         try (Session session = driver.session()) {
             session.writeTransaction(tx -> {
                 tx.run("MERGE (l:Ubicacion {nombre: $location}) " +
-                                "MERGE (d:Fecha {valor: $date}) " +
-                                "MERGE (l)-[:TIENE_PREVISION]->(w:Weather)-[:EN_FECHA]->(d) " +
-                                "ON CREATE SET w.weatherType = $weatherType, w.clouds = $clouds, w.rain = $rain, w.temperature = $temperature, w.humidity = $humidity " +
-                                "ON MATCH SET w.weatherType = $weatherType, w.clouds = $clouds, w.rain = $rain, w.temperature = $temperature, w.humidity = $humidity",
+                                "MERGE (d:Fecha {valor: $date}) MERGE (l)-[:TIENE_PREVISION]->(w:Weather)-[:EN_FECHA]->(d) " +
+                                "ON CREATE SET " + params + " ON MATCH SET " + params,
                         Values.parameters(
-                                "location", weatherNode.location(),
-                                "date", weatherNode.predictionTime(),
-                                "temperature", weatherNode.temperature(),
-                                "humidity", weatherNode.humidity(),
-                                "clouds", weatherNode.clouds(),
-                                "rain", weatherNode.rainProbability(),
+                                "location", weatherNode.location(), "date", weatherNode.predictionTime(),
+                                "temperature", weatherNode.temperature(), "humidity", weatherNode.humidity(),
+                                "clouds", weatherNode.clouds(), "rain", weatherNode.rainProbability(),
                                 "weatherType", weatherNode.weatherType().toString()
-                        ));
-                return null;
-            });
-        }
-    }
-    public void updateOfferNode(OfferNode offerNode) {
-        try (Session session = driver.session()) {
-            session.writeTransaction(tx -> {
-                tx.run("MERGE (h:Hotel {name: $hotelName}) " +
-                                "MERGE (l:Ubicacion {nombre: $location}) " +
-                                "MERGE (d:Fecha {valor: $date}) " +
-                                "MERGE (h)-[:SE_ENCUENTRA_EN]->(l) " +
-                                "MERGE (h)-[:OFRECE]->(o:Oferta {companyName: $companyName})-[:EN_FECHA]->(d) " +
-                                "ON CREATE SET o.precio_por_noche = $tax " +
-                                "ON MATCH SET o.precio_por_noche = $tax",
-                        Values.parameters(
-                                "hotelName", offerNode.hotelName(),
-                                "location", offerNode.locationName(),
-                                "date", offerNode.predictionTime(),
-                                "tax", offerNode.tax(),
-                                "companyName", offerNode.companyName()
                         ));
                 return null;
             });
@@ -94,8 +64,7 @@ public class Modelo implements AutoCloseable {
             Result result = session.run(
                     "MATCH (h:Hotel)-[:SE_ENCUENTRA_EN]->(l:Ubicacion {nombre: $location}) " +
                             "MATCH (o:Oferta)-[:EN_FECHA]->(d:Fecha {valor: $predictionTime}) " +
-                            "MATCH (h)-[:OFRECE]->(o)-[:EN_FECHA]->(d) " +
-                            "RETURN MIN(o.tax) AS tax",
+                            "MATCH (h)-[:OFRECE]->(o)-[:EN_FECHA]->(d) RETURN MIN(o.tax) AS tax",
                     Values.parameters("location", locationName, "predictionTime", predictionTime)
             );
             return result.single().get("tax", 0.0);
@@ -119,5 +88,4 @@ public class Modelo implements AutoCloseable {
             });
         }
     }
-
 }
