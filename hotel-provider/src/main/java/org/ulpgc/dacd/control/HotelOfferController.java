@@ -3,7 +3,6 @@ package org.ulpgc.dacd.control;
 import org.ulpgc.dacd.control.exceptions.StoreException;
 import org.ulpgc.dacd.model.HotelOffer;
 import org.ulpgc.dacd.model.Location;
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -34,10 +33,10 @@ public class HotelOfferController {
             @Override
             public void run() {
                 fetchAndStoreHotelPrices();
-                logger.info("HotelPrices data update completed.");
+                logger.info("Hotel offers update completed.");
             }
         };
-        timer.schedule(task, 0, 6 * 60 * 60 * 1000);
+        timer.schedule(task, 0, 24 * 60 * 60 * 1000);
     }
 
     private void fetchAndStoreHotelPrices() {
@@ -66,24 +65,46 @@ public class HotelOfferController {
         return dateList;
     }
     private static List<Location> loadLocations() {
-        List<Location> locations = new ArrayList<>();
-        try (BufferedReader br = new BufferedReader(new FileReader("locations.tsv"))) {
+        List<String> lines = readLinesFromFile("locations.tsv");
+        return parseLinesToLocations(lines);
+    }
+
+    private static List<String> readLinesFromFile(String filename) {
+        List<String> lines = new ArrayList<>();
+        try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
             String line;
             while ((line = br.readLine()) != null) {
-                String[] parts = line.split("\t");
-                if (parts.length >= 5) {
-                    String name = parts[0];
-                    String hotelName = parts[3];
-                    double latitude = Double.parseDouble(parts[1]);
-                    double longitude = Double.parseDouble(parts[2]);
-                    String hotelKey = parts[4];
-                    locations.add(new Location(name, hotelName, latitude, longitude, hotelKey));
-                }
+                lines.add(line);
             }
-        } catch (IOException | NumberFormatException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
+        return lines;
+    }
+
+    private static List<Location> parseLinesToLocations(List<String> lines) {
+        List<Location> locations = new ArrayList<>();
+        for (String line : lines) {
+            Location location = parseLineToLocation(line);
+            if (location != null) {
+                locations.add(location);
+            }
+        }
+        System.out.println(locations);
         return locations;
+    }
+
+    private static Location parseLineToLocation(String line) {
+        String[] parts = line.split("\t");
+        if (parts.length >= 3) {
+            String name = parts[0];
+            String hotelName = parts[3];
+            double latitude = Double.parseDouble(parts[1]);
+            double longitude = Double.parseDouble(parts[2]);
+            String hotelKey = parts[4];
+            return new Location(name, hotelName, latitude, longitude, hotelKey);
+        }
+        return null;
     }
 }
 
