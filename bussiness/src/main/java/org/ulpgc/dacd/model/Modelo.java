@@ -13,7 +13,7 @@ public class Modelo implements AutoCloseable {
         this.driver = GraphDatabase.driver(uri, AuthTokens.basic(user, password));
     }
 
-    public void updateHotelNode(HotelOfferNode hotelNode) {
+    /*public void updateHotelNode(HotelOfferNode hotelNode) {
         try (Session session = driver.session()) {
             session.writeTransaction(tx -> {
                 tx.run("MERGE (h:Hotel {name: $hotelName}) MERGE (d:Date {value: $date}) " +
@@ -27,7 +27,7 @@ public class Modelo implements AutoCloseable {
                 return null;
             });
         }
-    }
+    }*/
 
     public void updateWeatherNode(WeatherNode weatherNode) {
         String params = "w.weatherType = $weatherType, w.clouds = $clouds, w.rain = $rain, w.temperature = $temperature, w.humidity = $humidity";

@@ -7,12 +7,11 @@ import java.util.Map;
 
 public class HandlerFactory {
     private Map<String, Constructor<Handler>> handlers = new HashMap<>();
-    private Modelo modelo;
 
-    public HandlerFactory(Modelo modelo) {
-        this.modelo = modelo;
-        handlers.put("prediction.Weather", () -> new WeatherHandler(modelo));
-        handlers.put("prediction.Hotel", () -> new HotelOfferHandler(modelo));
+
+    public HandlerFactory(DataMartStore dataMartStore) {
+        handlers.put("prediction.Weather", () -> new WeatherHandler(dataMartStore));
+        handlers.put("prediction.Hotel", () -> new HotelOfferHandler(dataMartStore));
     }
 
     public Handler create(String type) {

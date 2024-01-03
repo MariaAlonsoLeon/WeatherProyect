@@ -6,36 +6,35 @@ import org.ulpgc.dacd.model.HotelOfferNode;
 import org.ulpgc.dacd.model.Modelo;
 
 public class HotelOfferHandler implements Handler {
-    private final Modelo modelo;
+    private DataMartStore dataMartStore;
 
-    public HotelOfferHandler(Modelo modelo) {
-        this.modelo = modelo;
+    public HotelOfferHandler(DataMartStore dataMartStore) {
+        this.dataMartStore = dataMartStore;
     }
 
     @Override
     public void handleEvent(String eventData) {
         try {
             HotelOfferNode hotelNode = parseHotelEvent(eventData);
-            updateModelWithHotelNode(hotelNode);
+            dataMartStore.saveHotelOffer(hotelNode);
+            //C:\Users\Maria\Desktop\HotelDB.db
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     private HotelOfferNode parseHotelEvent(String eventData) {
+        ///System.out.println(eventData);
+        //System.out.println("hola");
         JsonObject hotelEventJson = parseJson(eventData);
-        String companyName = hotelEventJson.get("name").getAsString();
+        //String companyName = hotelEventJson.get("name").getAsString();
+        //System.out.println(hotelEventJson.has("rate"));
         double tax = hotelEventJson.get("rate").getAsDouble();
         JsonObject locationJson = hotelEventJson.getAsJsonObject("location");
         String locationName = locationJson.get("name").getAsString();
         String hotelName = locationJson.get("hotelName").getAsString();
         String predictionTime = hotelEventJson.get("predictionTime").getAsString();
-        return new HotelOfferNode(hotelName, companyName ,tax, locationName, predictionTime);
-    }
-
-
-    private void updateModelWithHotelNode(HotelOfferNode hotelNode) {
-        modelo.updateHotelNode(hotelNode);
+        return new HotelOfferNode(hotelName ,tax, locationName, predictionTime);
     }
 
     private JsonObject parseJson(String jsonData) {

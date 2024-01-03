@@ -13,19 +13,17 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class WeatherHandler implements Handler {
-    private final Modelo modelo;
-    private final LocationRecommendationService locationRecommendationService;
+    DataMartStore dataMartStore;
 
-    public WeatherHandler(Modelo modelo) {
-        this.modelo = modelo;
-        this.locationRecommendationService = new LocationRecommendationService(modelo);
+    public WeatherHandler(DataMartStore dataMartStore) {
+        this.dataMartStore = dataMartStore;
     }
 
     @Override
     public void handleEvent(String eventData) {
         try {
             WeatherNode weatherNode = parseWeatherEvent(eventData);
-            updateModelWithWeatherNode(weatherNode);
+            dataMartStore.saveWeather(weatherNode);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -40,7 +38,7 @@ public class WeatherHandler implements Handler {
         double temperature = weatherEventJson.get("temperature").getAsDouble();
         int clouds = weatherEventJson.get("clouds").getAsInt();
         float rain = weatherEventJson.get("rain").getAsFloat();
-        WeatherType weatherType = locationRecommendationService.determineWeatherType(temperature, rain, clouds);
+        WeatherType weatherType = determineWeatherType(temperature, rain, clouds);
         return new WeatherNode(formattedDate, locationName, humidity, temperature, clouds, rain, weatherType);
     }
 
@@ -48,9 +46,6 @@ public class WeatherHandler implements Handler {
         String predictionTime = weatherEventJson.get("predictionTime").getAsString();
         LocalDateTime dateTime = LocalDateTime.parse(predictionTime, DateTimeFormatter.ISO_DATE_TIME);
         return dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-    }
-    private void updateModelWithWeatherNode(WeatherNode weatherNode) {
-        modelo.updateWeatherNode(weatherNode);
     }
 
     private JsonObject parseJson(String jsonData) {
@@ -60,6 +55,22 @@ public class WeatherHandler implements Handler {
         } catch (Exception e) {
             e.printStackTrace();
             return new JsonObject();
+        }
+    }
+
+    public WeatherType determineWeatherType(double temperature, float rainProbability, int cloudPercentage) {
+        if (temperature >= 0 && temperature <= 22) {
+            return WeatherType.COLD;
+        } else if (temperature > 22) {
+            return WeatherType.WARM;
+        } else if (temperature < 0) {
+            return WeatherType.SNOWY;
+        } else if (rainProbability > 50) {
+            return WeatherType.RAINY;
+        } else if (cloudPercentage < 30) {
+            return WeatherType.CLEAR;
+        } else {
+            return WeatherType.UNKNOWN;
         }
     }
 }

@@ -1,21 +1,26 @@
 package org.ulpgc.dacd.control;
 
 import java.util.List;
+import java.util.Map;
 
 import org.ulpgc.dacd.model.Modelo;
 
 public class DataMartBuilder {
-    private final Modelo modelo;
     private final DataLakeAccessor dataLakeAccessor;
+    private Handler hotelOfferHandler;
+    private Handler weatherHandler;
 
-    public DataMartBuilder(Modelo modelo, DataLakeAccessor dataLakeAccessor) {
-        this.modelo = modelo;
+    public DataMartBuilder(DataLakeAccessor dataLakeAccessor, Handler hotelOfferHandler, Handler weatherHandler) {
         this.dataLakeAccessor = dataLakeAccessor;
+        this.hotelOfferHandler = hotelOfferHandler;
+        this.weatherHandler = weatherHandler;
     }
 
     public void buildDataMart() {
         List<String> weatherData = dataLakeAccessor.getWeatherData();
         List<String> hotelData = dataLakeAccessor.getHotelData();
+        System.out.println(hotelData);
+        System.out.println(weatherData);
 
         processWeatherData(weatherData);
         processHotelData(hotelData);
@@ -23,15 +28,15 @@ public class DataMartBuilder {
 
     private void processWeatherData(List<String> weatherData) {
         for (String data : weatherData) {
-            WeatherHandler weatherHandler = new WeatherHandler(modelo);
+            System.out.println("hola?");
             weatherHandler.handleEvent(data);
         }
     }
 
     private void processHotelData(List<String> hotelData) {
+        System.out.println(hotelData);
         for (String data : hotelData) {
-            HotelOfferHandler hotelHandler = new HotelOfferHandler(modelo);
-            hotelHandler.handleEvent(data);
+            hotelOfferHandler.handleEvent(data);
         }
     }
 

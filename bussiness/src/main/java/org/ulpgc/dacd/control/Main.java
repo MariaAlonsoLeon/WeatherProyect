@@ -22,28 +22,25 @@ public class Main {
         }
 
         String dataLakeDirectory = args[0];
-        String neo4jPassword = args[1];
-
-        String neo4jUri = "bolt://localhost:7687";
-        String neo4jUser = "neo4j";
-
-        Modelo modelo = new Modelo(neo4jUri, neo4jUser, neo4jPassword);
 
         DataLakeAccessor dataLakeAccessor = new DataLakeAccessor(dataLakeDirectory);
-        DataMartBuilder dataMartBuilder = new DataMartBuilder(modelo, dataLakeAccessor);
+        DataMartStore dataMartStore = new SqLiteDataMartStore("C:\\Users\\Maria\\Desktop\\HotelDB.db");
+        HandlerFactory handlerFactory = new HandlerFactory(dataMartStore);
+        Handler weatherHandler = handlerFactory.create("prediction.Weather");
+        Handler hotelOfferHandler = handlerFactory.create("prediction.Hotel");
+
+        TopicSubscriber topicSubscriber = new TopicSubscriber(brokerUrl, List.of("prediction.Weather", "prediction.Hotel"), "clientId");
+
+        DataMartBuilder dataMartBuilder = new DataMartBuilder(dataLakeAccessor, hotelOfferHandler, weatherHandler);
         // Llamada a buildDataMart si es necesario
         dataMartBuilder.buildDataMart();
 
-        TopicSubscriber topicSubscriber = new TopicSubscriber(brokerUrl, List.of("prediction.Weather", "prediction.Hotel"), "clientId");
-        HandlerFactory handlerFactory = new HandlerFactory(modelo);
-
-        WeatherHandler weatherHandler = new WeatherHandler(modelo);
-        HotelOfferHandler hotelHandler = new HotelOfferHandler(modelo);
-
         topicSubscriber.registerHandler("prediction.Weather", weatherHandler);
-        topicSubscriber.registerHandler("prediction.Hotel", hotelHandler);
+        topicSubscriber.registerHandler("prediction.Hotel", hotelOfferHandler);
 
-        HotelRecommendationAPI hotelAPI = new HotelRecommendationAPI(new LocationRecommendationService(modelo));
+
+        DataMartConsultant dataMartConsultant = new DataMartConsultant("C:\\Users\\Maria\\Desktop\\HotelDB.db");
+        HotelRecommendationAPI hotelAPI = new HotelRecommendationAPI(dataMartConsultant);
         hotelAPI.init();
 
         ExecutorService executorService = Executors.newSingleThreadExecutor();
@@ -58,12 +55,6 @@ public class Main {
         // Agregar las siguientes líneas para probar la interfaz de usuario
         //CommandLineInterface cli = new CommandLineInterface(new LocationRecommendationService(modelo));
         //cli.iniciar();
-
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            logger.info("Cerrando la aplicación. Limpiando datos del grafo...");
-            modelo.clearGraph();
-            logger.info("Datos del grafo limpiados.");
-        }));
 
         executorService.shutdown();
         //modelo.limpiarGrafo();
