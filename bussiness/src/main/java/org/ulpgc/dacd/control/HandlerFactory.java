@@ -1,7 +1,5 @@
 package org.ulpgc.dacd.control;
 
-import org.ulpgc.dacd.model.Modelo;
-
 import java.util.HashMap;
 import java.util.Map;
 

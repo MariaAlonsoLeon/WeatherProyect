@@ -1,9 +1,6 @@
 package org.ulpgc.dacd.control;
 
 import java.util.List;
-import java.util.Map;
-
-import org.ulpgc.dacd.model.Modelo;
 
 public class DataMartBuilder {
     private final DataLakeAccessor dataLakeAccessor;

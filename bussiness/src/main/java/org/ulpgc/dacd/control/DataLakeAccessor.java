@@ -5,12 +5,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class DataLakeAccessor {
     private static final Logger logger = Logger.getLogger(DataLakeAccessor.class.getName());
@@ -32,10 +31,9 @@ public class DataLakeAccessor {
     private List<String> getLatestEventData(String topic, String ss, int maxEvents) {
         try {
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
-            String today = dateFormat.format(new Date());
-
-            String eventStoreDirectory = Paths.get(dataLakeDirectory, "eventstore", topic, ss, today + ".events").toString();
-
+            String today = getLastestDate(topic, ss);
+            System.out.println(today);
+            String eventStoreDirectory = Paths.get(dataLakeDirectory, "eventstore", topic, ss, today).toString();
             return readLatestEventsFromFile(eventStoreDirectory, maxEvents);
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Error reading latest event data", e);
@@ -43,12 +41,27 @@ public class DataLakeAccessor {
         return Collections.emptyList();
     }
 
+    private String getLastestDate(String topic, String ss) throws IOException {
+        Path eventStorePath = Paths.get(dataLakeDirectory, "eventstore", topic, ss);
+
+        try (Stream<Path> filesStream = Files.list(eventStorePath)) {
+            List<String> files = filesStream
+                    .filter(Files::isRegularFile)
+                    .map(Path::getFileName)
+                    .map(Path::toString)
+                    .collect(Collectors.toList());
+            return files.stream()
+                    .max(Comparator.naturalOrder())
+                    .orElse(null);
+        }
+    }
+
     private List<String> getAllLatestEventData(String topic, String ss) {
         try {
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
-            String today = dateFormat.format(new Date());
+            String today = getLastestDate(topic, ss);
 
-            String eventStoreDirectory = Paths.get(dataLakeDirectory, "eventstore", topic, ss, today + ".events").toString();
+            String eventStoreDirectory = Paths.get(dataLakeDirectory, "eventstore", topic, ss, today).toString();
 
             return readAllLatestEventsFromFile(eventStoreDirectory);
         } catch (IOException e) {

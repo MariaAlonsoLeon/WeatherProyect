@@ -1,11 +1,9 @@
 package org.ulpgc.dacd.control;
 
 import org.ulpgc.dacd.control.exceptions.EventReceiverException;
-import org.ulpgc.dacd.model.Modelo;
 import org.ulpgc.dacd.view.HotelRecommendationAPI;
 
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;

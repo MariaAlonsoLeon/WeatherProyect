@@ -1,15 +1,9 @@
 package org.ulpgc.dacd.view;
 
-import org.ulpgc.dacd.control.LocationRecommendationService;
-
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.*;
-
 public class CommandLineInterface {
-    private final LocationRecommendationService locationRecommendationService;
+    //private final LocationRecommendationService locationRecommendationService;
 
-    public CommandLineInterface(LocationRecommendationService locationRecommendationService) {
+    /*public CommandLineInterface(LocationRecommendationService locationRecommendationService) {
         this.locationRecommendationService = locationRecommendationService;
     }
 
@@ -136,6 +130,6 @@ public class CommandLineInterface {
         } catch (ParseException e) {
             return false;
         }
-    }
+    }*/
 }
 

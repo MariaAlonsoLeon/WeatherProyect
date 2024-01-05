@@ -3,7 +3,6 @@ package org.ulpgc.dacd.control;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.ulpgc.dacd.model.HotelOfferNode;
-import org.ulpgc.dacd.model.Modelo;
 
 public class HotelOfferHandler implements Handler {
     private DataMartStore dataMartStore;
@@ -34,7 +33,8 @@ public class HotelOfferHandler implements Handler {
         String locationName = locationJson.get("name").getAsString();
         String hotelName = locationJson.get("hotelName").getAsString();
         String predictionTime = hotelEventJson.get("predictionTime").getAsString();
-        return new HotelOfferNode(hotelName ,tax, locationName, predictionTime);
+        String companyName = hotelEventJson.get("companyName").getAsString();
+        return new HotelOfferNode(hotelName ,tax, locationName, companyName, predictionTime);
     }
 
     private JsonObject parseJson(String jsonData) {
