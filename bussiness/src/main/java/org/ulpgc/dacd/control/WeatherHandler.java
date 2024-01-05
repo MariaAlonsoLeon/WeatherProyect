@@ -4,7 +4,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.ulpgc.dacd.model.WeatherNode;
 import org.ulpgc.dacd.model.WeatherType;
-
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -56,18 +55,11 @@ public class WeatherHandler implements Handler {
     }
 
     public WeatherType determineWeatherType(double temperature, float rainProbability, int cloudPercentage) {
-        if (temperature >= 0 && temperature <= 22) {
-            return WeatherType.COLD;
-        } else if (temperature > 22) {
-            return WeatherType.WARM;
-        } else if (temperature < 0) {
-            return WeatherType.SNOWY;
-        } else if (rainProbability > 50) {
-            return WeatherType.RAINY;
-        } else if (cloudPercentage < 30) {
-            return WeatherType.CLEAR;
-        } else {
-            return WeatherType.UNKNOWN;
-        }
+        if (temperature < 0) return WeatherType.SNOWY;
+        if (temperature <= 18) return WeatherType.COLD;
+        if (temperature > 18) return WeatherType.WARM;
+        if (rainProbability > 50) return WeatherType.RAINY;
+        if (cloudPercentage < 30) return WeatherType.CLEAR;
+        return WeatherType.UNKNOWN;
     }
 }

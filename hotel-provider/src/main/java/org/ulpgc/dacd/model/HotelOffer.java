@@ -6,15 +6,15 @@ public class HotelOffer {
     private String ss;
     private Instant ts;
     private String predictionTime;
-    private String hotelName;
+    private String companyName;
     private float rate;
     private Location location;
 
 
-    public HotelOffer(String hotelName, float rate, Location location, String predictionTime) {
+    public HotelOffer(String companyName, float rate, Location location,String predictionTime) {
         this.ss = "hotel-provider";
         this.ts = Instant.now();
-        this.hotelName = hotelName;
+        this.companyName = companyName;
         this.rate = rate;
         this.location = location;
         this.predictionTime = predictionTime;
@@ -26,7 +26,7 @@ public class HotelOffer {
                 "ss='" + ss + '\'' +
                 ", ts=" + ts +
                 ", predictionTime='" + predictionTime + '\'' +
-                ", name='" + hotelName + '\'' +
+                ", name='" + companyName + '\'' +
                 ", tax=" + rate +
                 ", location=" + location +
                 '}';

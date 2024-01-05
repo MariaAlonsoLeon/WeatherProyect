@@ -16,22 +16,17 @@ public class DataMartBuilder {
     public void buildDataMart() {
         List<String> weatherData = dataLakeAccessor.getWeatherData();
         List<String> hotelData = dataLakeAccessor.getHotelData();
-        System.out.println(hotelData);
-        System.out.println(weatherData);
-
         processWeatherData(weatherData);
         processHotelData(hotelData);
     }
 
     private void processWeatherData(List<String> weatherData) {
         for (String data : weatherData) {
-            System.out.println("hola?");
             weatherHandler.handleEvent(data);
         }
     }
 
     private void processHotelData(List<String> hotelData) {
-        System.out.println(hotelData);
         for (String data : hotelData) {
             hotelOfferHandler.handleEvent(data);
         }

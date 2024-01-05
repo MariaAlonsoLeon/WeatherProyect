@@ -2,7 +2,6 @@ package org.ulpgc.dacd.control;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.ulpgc.dacd.control.exceptions.EventReceiverException;
-
 import javax.jms.*;
 import java.util.HashMap;
 import java.util.List;
@@ -19,16 +18,13 @@ public class TopicSubscriber implements Subscriber {
     private final List<String> topicNames;
     private final String clientID;
 
-    public TopicSubscriber(String brokerUrl, List<String> topicNames, String clientID) {
+    public TopicSubscriber(String brokerUrl, List<String> topicNames, String clientID, Map<String, Handler> topicHandlers) {
         this.brokerUrl = brokerUrl;
         this.topicNames = topicNames;
         this.clientID = clientID;
-        this.topicHandlers = new HashMap<>();
+        this.topicHandlers = topicHandlers;
     }
 
-    public void registerHandler(String topic, Handler handler) {
-        topicHandlers.put(topic, handler);
-    }
 
     @Override
     public void start() throws EventReceiverException {

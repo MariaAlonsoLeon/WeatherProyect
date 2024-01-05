@@ -7,12 +7,7 @@ import org.ulpgc.dacd.view.model.Weather;
 import spark.Request;
 import spark.Response;
 import org.ulpgc.dacd.view.model.Offer;
-
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-
 import static spark.Spark.*;
 
 public class HotelRecommendationAPI {
@@ -24,62 +19,49 @@ public class HotelRecommendationAPI {
 
     public void init() {
         configureStaticFiles();
-        setupClimasEndpoint();
-        setupLocalizacionesEndpoint();
-        setupOfertaMasBarataEndpoint();
-        setupOfertasMasBaratasPorClimaFechaEndpoint();
+        setupLocationsEndpoint();
+        setupCheapestOfferEndpoint();
+        setupCheapestOffersByWeatherAndDateEndpoint();
     }
 
     private void configureStaticFiles() {
         staticFiles.location("/public");
     }
 
-    private void setupClimasEndpoint() {
-        get("/climas", this::getTiposClima);
+    private void setupLocationsEndpoint() {
+        get("/locations", this::getLocations);
     }
 
-    private String getTiposClima(Request request, Response response) {
+    private String getLocations(Request request, Response response) {
         response.type("application/json");
-        return new Gson().toJson(Arrays.asList("COLD", "RAINY", "WARM", "SNOWY", "CLEAR"));
+        String weatherType = request.queryParams("weather");
+        String date = request.queryParams("date");
+        Map<String, Weather> locations = dataMartConsultant.getLocationsByWeatherAndDate(weatherType, date);
+        System.out.println(locations);
+        return new Gson().toJson(locations);
     }
 
-    private void setupLocalizacionesEndpoint() {
-        get("/localizaciones", this::getLocalizaciones);
+    private void setupCheapestOfferEndpoint() {
+        get("/offer/:location/:date", this::getCheapestOffer);
     }
 
-    private String getLocalizaciones(Request request, Response response) {
+    private String getCheapestOffer(Request request, Response response) {
         response.type("application/json");
-        String tipoClima = request.queryParams("clima");
-        String fecha = request.queryParams("fecha");
-        Map<String, Weather> localizaciones = dataMartConsultant.getLocationsByWeatherAndDate(tipoClima, fecha);
-        System.out.println(localizaciones);
-        return new Gson().toJson(localizaciones);
+        String location = request.params(":location");
+        String bookingDate = request.params(":date");
+        HotelOffer cheapestOffer = dataMartConsultant.getCheapestOffer(location, bookingDate);
+        return new Gson().toJson(cheapestOffer);
     }
 
-    private void setupOfertaMasBarataEndpoint() {
-        get("/oferta/:localizacion/:fecha", this::getOfertaMasBarata);
+    private void setupCheapestOffersByWeatherAndDateEndpoint() {
+        get("/cheapest-offers", this::getCheapestOffersByWeatherAndDate);
     }
 
-    private String getOfertaMasBarata(Request request, Response response) {
+    private String getCheapestOffersByWeatherAndDate(Request request, Response response) {
         response.type("application/json");
-        String localizacion = request.params(":localizacion");
-        String fechaReserva = request.params(":fecha");
-        HotelOffer tarifaMasBarata = dataMartConsultant.getCheapestOffer(localizacion, fechaReserva);
-        return new Gson().toJson(tarifaMasBarata);
+        String weatherType = request.queryParams("weather");
+        String date = request.queryParams("date");
+        Offer cheapestOffers = dataMartConsultant.getCheapestHotelOffersByWeatherAndDate(weatherType, date);
+        return new Gson().toJson(cheapestOffers);
     }
-
-    private void setupOfertasMasBaratasPorClimaFechaEndpoint() {
-        get("/ofertas-mas-baratas", this::getOfertasMasBaratasPorClimaFecha);
-    }
-
-    private String getOfertasMasBaratasPorClimaFecha(Request request, Response response) {
-        response.type("application/json");
-        String tipoClima = request.queryParams("clima");
-        String fecha = request.queryParams("fecha");
-
-        Offer ofertasMasBaratas = dataMartConsultant.getCheapestHotelOffersByWeatherAndDate(tipoClima, fecha);
-
-        return new Gson().toJson(ofertasMasBaratas);
-    }
-
 }

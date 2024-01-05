@@ -1,11 +1,11 @@
 package org.ulpgc.dacd.control;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class HandlerFactory {
-    private Map<String, Constructor<Handler>> handlers = new HashMap<>();
-
+    private final Map<String, Constructor<Handler>> handlers = new HashMap<>();
 
     public HandlerFactory(DataMartStore dataMartStore) {
         handlers.put("prediction.Weather", () -> new WeatherHandler(dataMartStore));

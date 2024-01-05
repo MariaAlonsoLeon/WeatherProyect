@@ -16,18 +16,13 @@ public class HotelOfferHandler implements Handler {
         try {
             HotelOfferNode hotelNode = parseHotelEvent(eventData);
             dataMartStore.saveHotelOffer(hotelNode);
-            //C:\Users\Maria\Desktop\HotelDB.db
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     private HotelOfferNode parseHotelEvent(String eventData) {
-        ///System.out.println(eventData);
-        //System.out.println("hola");
         JsonObject hotelEventJson = parseJson(eventData);
-        //String companyName = hotelEventJson.get("name").getAsString();
-        //System.out.println(hotelEventJson.has("rate"));
         double tax = hotelEventJson.get("rate").getAsDouble();
         JsonObject locationJson = hotelEventJson.getAsJsonObject("location");
         String locationName = locationJson.get("name").getAsString();

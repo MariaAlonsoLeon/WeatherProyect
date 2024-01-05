@@ -14,7 +14,6 @@ public class SqLiteDataMartStore implements DataMartStore {
         this.dbPath = dbPath;
     }
 
-    // Métodos públicos de la clase
     public void saveHotelOffer(HotelOfferNode hotelDataEntry) {
         String tableName = "HotelOffers";
         try (Connection connection = connect(dbPath)) {
@@ -37,17 +36,13 @@ public class SqLiteDataMartStore implements DataMartStore {
         }
     }
 
-    public void close() {
-        // Implementa el cierre si es necesario
-    }
-
-    // Métodos relacionados con la creación de tablas
     private static void createHotelTable(Statement statement, String tableName) throws SQLException {
         System.out.println("Tabla creada");
         statement.execute("CREATE TABLE IF NOT EXISTS " + tableName + " (" +
                 "location TEXT," +
                 "date TEXT," +
                 "name TEXT," +
+                "companyName TEXT," +
                 "price REAL," +
                 "PRIMARY KEY (location, date)" +
                 ");");
@@ -60,18 +55,13 @@ public class SqLiteDataMartStore implements DataMartStore {
                 "temperature REAL," +
                 "rainProbability REAL," +
                 "humidity INTEGER," +
+                "clouds INTEGER," +
                 "windSpeed REAL," +
                 "weatherType TEXT," +
                 "PRIMARY KEY (location, date)" +
                 ");");
     }
 
-    public String buildTableName(String locationName) {
-        String tableName = locationName.replaceAll("\\s", "_");
-        return tableName;
-    }
-
-    // Métodos relacionados con la manipulación de datos de hoteles
     private static void updateOrInsertHotelData(HotelOfferNode hotelDataEntry, Connection connection, String tableName)
             throws SQLException {
         if (isDateTimeAndLocationInTable(connection, tableName, hotelDataEntry.locationName(), hotelDataEntry.predictionTime())) {
@@ -84,7 +74,7 @@ public class SqLiteDataMartStore implements DataMartStore {
     private static void insertHotelData(Connection connection, HotelOfferNode hotelDataEntry) throws SQLException {
         String tableName = "HotelOffers";
         String insertSQL = String.format(
-                "INSERT INTO %s (location, date, name, price) VALUES (?, ?, ?, ?)", tableName);
+                "INSERT INTO %s (location, date, name, companyName, price) VALUES (?, ?, ? , ?, ?)", tableName);
         try (PreparedStatement preparedStatement = connection.prepareStatement(insertSQL)) {
             setInsertHotelParameters(preparedStatement, hotelDataEntry);
             preparedStatement.executeUpdate();
@@ -106,7 +96,8 @@ public class SqLiteDataMartStore implements DataMartStore {
         preparedStatement.setString(1, hotelDataEntry.locationName());
         preparedStatement.setString(2, String.valueOf(hotelDataEntry.predictionTime()));
         preparedStatement.setString(3, hotelDataEntry.name());
-        preparedStatement.setDouble(4, hotelDataEntry.tax());
+        preparedStatement.setString(4, hotelDataEntry.companyName());
+        preparedStatement.setDouble(5, hotelDataEntry.tax());
     }
 
     private static void setUpdateHotelParameters(PreparedStatement preparedStatement, HotelOfferNode hotelDataEntry) throws SQLException {
@@ -115,7 +106,6 @@ public class SqLiteDataMartStore implements DataMartStore {
         preparedStatement.setString(3, String.valueOf(hotelDataEntry.predictionTime()));
     }
 
-    // Métodos relacionados con la manipulación de datos de clima
     private static void updateOrInsertWeatherData(WeatherNode weatherDataEntry, Connection connection, String tableName)
             throws SQLException {
         if (isDateTimeAndLocationInTable(connection, tableName, weatherDataEntry.location(), weatherDataEntry.predictionTime())) {
@@ -128,7 +118,7 @@ public class SqLiteDataMartStore implements DataMartStore {
     private static void insertWeatherData(Connection connection, WeatherNode weatherDataEntry) throws SQLException {
         String tableName = "Weathers";
         String insertSQL = String.format(
-                "INSERT INTO %s (location, date, temperature, rainProbability, humidity, windSpeed, weatherType) VALUES (?, ?, ?, ?, ?, ?, ?)", tableName);
+                "INSERT INTO %s (location, date, temperature, rainProbability, humidity, clouds, windSpeed, weatherType) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", tableName);
 
         try (PreparedStatement preparedStatement = connection.prepareStatement(insertSQL)) {
             setInsertWeatherParameters(preparedStatement, weatherDataEntry);
@@ -139,7 +129,7 @@ public class SqLiteDataMartStore implements DataMartStore {
     private static void updateWeatherData(Connection connection, WeatherNode weatherDataEntry) throws SQLException {
         String tableName = "Weathers";
         String updateSQL = String.format(
-                "UPDATE %s SET temperature = ?, rainProbability = ?, humidity = ?, windSpeed = ?, weatherType = ? WHERE location = ? AND date = ?", tableName);
+                "UPDATE %s SET temperature = ?, rainProbability = ?, humidity = ?, clouds = ?, windSpeed = ?, weatherType = ? WHERE location = ? AND date = ?", tableName);
 
         try (PreparedStatement preparedStatement = connection.prepareStatement(updateSQL)) {
             setUpdateWeatherParameters(preparedStatement, weatherDataEntry);
@@ -152,22 +142,23 @@ public class SqLiteDataMartStore implements DataMartStore {
         preparedStatement.setString(2, String.valueOf(weatherDataEntry.predictionTime()));
         preparedStatement.setDouble(3, weatherDataEntry.temperature());
         preparedStatement.setDouble(4, weatherDataEntry.rainProbability());
-        preparedStatement.setInt(5, weatherDataEntry.humidity());
-        //preparedStatement.setDouble(6, weatherDataEntry.windSpeed());
-        preparedStatement.setString(7, String.valueOf(weatherDataEntry.weatherType()));
+        preparedStatement.setDouble(5, weatherDataEntry.clouds());
+        preparedStatement.setInt(6, weatherDataEntry.humidity());
+        preparedStatement.setDouble(7, weatherDataEntry.windSpeed());
+        preparedStatement.setString(8, String.valueOf(weatherDataEntry.weatherType()));
     }
 
     private static void setUpdateWeatherParameters(PreparedStatement preparedStatement, WeatherNode weatherDataEntry) throws SQLException {
         preparedStatement.setDouble(1, weatherDataEntry.temperature());
         preparedStatement.setDouble(2, weatherDataEntry.rainProbability());
         preparedStatement.setInt(3, weatherDataEntry.humidity());
-        //preparedStatement.setDouble(4, weatherDataEntry.windSpeed());
-        preparedStatement.setString(5, String.valueOf(weatherDataEntry.weatherType()));
-        preparedStatement.setString(6, weatherDataEntry.location());
-        preparedStatement.setString(7, String.valueOf(weatherDataEntry.predictionTime()));
+        preparedStatement.setDouble(4, weatherDataEntry.clouds());
+        preparedStatement.setDouble(5, weatherDataEntry.windSpeed());
+        preparedStatement.setString(6, String.valueOf(weatherDataEntry.weatherType()));
+        preparedStatement.setString(7, weatherDataEntry.location());
+        preparedStatement.setString(8, String.valueOf(weatherDataEntry.predictionTime()));
     }
 
-    // Métodos auxiliares
     private static boolean isDateTimeAndLocationInTable(Connection connection, String tableName, String location, String predictionTime)
             throws SQLException {
         String query = "SELECT COUNT(*) FROM " + tableName + " WHERE location = ? AND date = ?";
