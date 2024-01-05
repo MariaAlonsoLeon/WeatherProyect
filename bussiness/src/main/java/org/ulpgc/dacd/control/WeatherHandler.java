@@ -2,12 +2,8 @@ package org.ulpgc.dacd.control;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.ulpgc.dacd.model.Modelo;
 import org.ulpgc.dacd.model.WeatherNode;
 import org.ulpgc.dacd.model.WeatherType;
-
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -38,8 +34,9 @@ public class WeatherHandler implements Handler {
         double temperature = weatherEventJson.get("temperature").getAsDouble();
         int clouds = weatherEventJson.get("clouds").getAsInt();
         float rain = weatherEventJson.get("rain").getAsFloat();
+        float windSpeed = weatherEventJson.get("windSpeed").getAsFloat();
         WeatherType weatherType = determineWeatherType(temperature, rain, clouds);
-        return new WeatherNode(formattedDate, locationName, humidity, temperature, clouds, rain, weatherType);
+        return new WeatherNode(formattedDate, locationName, humidity, temperature, clouds, rain, windSpeed ,weatherType);
     }
 
     public String extractAndFormatDate(JsonObject weatherEventJson){
