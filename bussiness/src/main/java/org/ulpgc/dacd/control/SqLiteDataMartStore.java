@@ -1,5 +1,6 @@
 package org.ulpgc.dacd.control;
 
+import org.ulpgc.dacd.control.exceptions.DataMartStoreException;
 import org.ulpgc.dacd.model.HotelOfferNode;
 import org.ulpgc.dacd.model.WeatherNode;
 
@@ -14,25 +15,25 @@ public class SqLiteDataMartStore implements DataMartStore {
         this.dbPath = dbPath;
     }
 
-    public void saveHotelOffer(HotelOfferNode hotelDataEntry) {
+    public void saveHotelOffer(HotelOfferNode hotelDataEntry) throws DataMartStoreException {
         String tableName = "HotelOffers";
         try (Connection connection = connect(dbPath)) {
             Statement statement = connection.createStatement();
             createHotelTable(statement, tableName);
             updateOrInsertHotelData(hotelDataEntry, connection, tableName);
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            throw new DataMartStoreException("Error saving hotel offer", e);
         }
     }
 
-    public void saveWeather(WeatherNode weatherDataEntry) {
+    public void saveWeather(WeatherNode weatherDataEntry) throws DataMartStoreException {
         String tableName = "Weathers";
         try (Connection connection = connect(dbPath)) {
             Statement statement = connection.createStatement();
             createWeatherTable(statement, tableName);
             updateOrInsertWeatherData(weatherDataEntry, connection, tableName);
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            throw new DataMartStoreException("Error saving weather data", e);
         }
     }
 
@@ -184,5 +185,21 @@ public class SqLiteDataMartStore implements DataMartStore {
             System.out.println(e.getMessage());
         }
         return connection;
+    }
+
+    public void clearTables() throws DataMartStoreException {
+        try (Connection connection = connect(dbPath)) {
+            clearTable(connection, "HotelOffers");
+            clearTable(connection, "Weathers");
+        } catch (SQLException e) {
+            throw new DataMartStoreException("Error clearing tables", e);
+        }
+    }
+
+    private static void clearTable(Connection connection, String tableName) throws SQLException {
+        String deleteSQL = "DELETE FROM " + tableName;
+        try (PreparedStatement preparedStatement = connection.prepareStatement(deleteSQL)) {
+            preparedStatement.executeUpdate();
+        }
     }
 }

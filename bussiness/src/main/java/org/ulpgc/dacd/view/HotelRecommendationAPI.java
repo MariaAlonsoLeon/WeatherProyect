@@ -2,6 +2,7 @@ package org.ulpgc.dacd.view;
 
 import com.google.gson.Gson;
 import org.ulpgc.dacd.control.DataMartConsultant;
+import org.ulpgc.dacd.control.exceptions.DataMartException;
 import org.ulpgc.dacd.view.model.HotelOffer;
 import org.ulpgc.dacd.view.model.Weather;
 import spark.Request;
@@ -32,7 +33,7 @@ public class HotelRecommendationAPI {
         get("/locations", this::getLocations);
     }
 
-    private String getLocations(Request request, Response response) {
+    private String getLocations(Request request, Response response) throws DataMartException {
         response.type("application/json");
         String weatherType = request.queryParams("weather");
         String date = request.queryParams("date");
@@ -45,7 +46,7 @@ public class HotelRecommendationAPI {
         get("/offer/:location/:date", this::getCheapestOffer);
     }
 
-    private String getCheapestOffer(Request request, Response response) {
+    private String getCheapestOffer(Request request, Response response) throws DataMartException {
         response.type("application/json");
         String location = request.params(":location");
         String bookingDate = request.params(":date");
@@ -57,7 +58,7 @@ public class HotelRecommendationAPI {
         get("/cheapest-offers", this::getCheapestOffersByWeatherAndDate);
     }
 
-    private String getCheapestOffersByWeatherAndDate(Request request, Response response) {
+    private String getCheapestOffersByWeatherAndDate(Request request, Response response) throws DataMartException {
         response.type("application/json");
         String weatherType = request.queryParams("weather");
         String date = request.queryParams("date");
