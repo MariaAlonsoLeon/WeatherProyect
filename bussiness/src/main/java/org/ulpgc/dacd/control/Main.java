@@ -21,23 +21,22 @@ public class Main {
     }
 
     private void run(String[] args) {
+        clearTables(args);
         String brokerUrl = "tcp://localhost:61616";
         if (args.length < 4) {
             logger.severe("Insufficient arguments. Usage: Main <baseDirectory> <topic1> <topic2> ...");
-            return;
         }
 
         try {
-            String dataLakeDirectory = args[0];
-            String dataMartDirectory = args[1];
+            //Map<String, String> topicNames = handlersOf(Arrays.asList(args[2], args[3]));
             List<String> topicNames = Arrays.asList(args[2], args[3]);
-            DataLakeAccessor dataLakeAccessor = new DataLakeAccessor(dataLakeDirectory);
-            DataMartStore dataMartStore = new SqLiteDataMartStore(dataMartDirectory);
+            DataLakeAccessor dataLakeAccessor = new DataLakeAccessor(args[0]);
+            DataMartStore dataMartStore = new SqLiteDataMartStore(args[1]);
             Map<String, Handler> handlerMap = initializeHandlers(dataMartStore, topicNames);
             TopicSubscriber topicSubscriber = new TopicSubscriber(brokerUrl, topicNames, "clientId", handlerMap);
             DataMartBuilder dataMartBuilder = new DataMartBuilder(dataLakeAccessor, handlerMap.get(topicNames.get(0)), handlerMap.get(topicNames.get(1)));
             dataMartBuilder.buildDataMart();
-            DataMartConsultant dataMartConsultant = new DataMartConsultant(dataMartDirectory);
+            DataMartConsultant dataMartConsultant = new DataMartConsultant(args[1]);
             HotelRecommendationAPI hotelAPI = new HotelRecommendationAPI(dataMartConsultant);
             hotelAPI.init();
             startTopicSubscriber(topicSubscriber);
@@ -45,20 +44,28 @@ public class Main {
 
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                 logger.info("Cerrando la aplicación. Limpiando datos de las tablas...");
-                clearTables(args);
                 logger.info("Datos de las tablas limpiados.");
             }));
         }
     }
 
-    private Map<String, Handler> initializeHandlers(DataMartStore dataMartStore, List<String> topicNames) {
+    private Map<String, Handler> initializeHandlers(DataMartStore dataMartStore, List<String> topicsName) {
         HandlerFactory handlerFactory = new HandlerFactory(dataMartStore);
         Map<String, Handler> handlerMap = new HashMap<>();
-        for (String topicName : topicNames) {
+        for (String topicName : topicsName) {
             handlerMap.put(topicName, handlerFactory.create(topicName));
         }
         return handlerMap;
     }
+
+    /*private Map<String, Handler> initializeHandlers(DataMartStore dataMartStore, Map<String, String> handlers) {
+        HandlerFactory handlerFactory = new HandlerFactory(dataMartStore);
+        Map<String, Handler> handlerMap = new HashMap<>();
+        for (String topicName : handlers.keySet()) {
+            handlerMap.put(handlers.get(topicName), handlerFactory.create(topicName));
+        }
+        return handlerMap;
+    }*/
 
     private void startTopicSubscriber(TopicSubscriber topicSubscriber) {
         ExecutorService executorService = Executors.newSingleThreadExecutor();
@@ -72,7 +79,7 @@ public class Main {
         executorService.shutdown();
     }
 
-    private void clearTables(String[] args) {
+    private void clearTables(String[] args) { //Eliminar la base de datos
         try {
             String dataMartDirectory = args[1];
             DataMartStore dataMartStore = new SqLiteDataMartStore(dataMartDirectory);
