@@ -19,18 +19,10 @@ public class HotelRecommendationAPI {
     }
 
     public void init() {
-        configureStaticFiles();
-        setupLocationsEndpoint();
-        setupCheapestOfferEndpoint();
-        setupCheapestOffersByWeatherAndDateEndpoint();
-    }
-
-    private void configureStaticFiles() {
         staticFiles.location("/public");
-    }
-
-    private void setupLocationsEndpoint() {
         get("/locations", this::getLocations);
+        get("/offer/:location/:date", this::getCheapestOffer);
+        get("/cheapest-offers", this::getCheapestOffersByWeatherAndDate);
     }
 
     private String getLocations(Request request, Response response) throws DataMartException {
@@ -42,20 +34,12 @@ public class HotelRecommendationAPI {
         return new Gson().toJson(locations);
     }
 
-    private void setupCheapestOfferEndpoint() {
-        get("/offer/:location/:date", this::getCheapestOffer);
-    }
-
     private String getCheapestOffer(Request request, Response response) throws DataMartException {
         response.type("application/json");
         String location = request.params(":location");
         String bookingDate = request.params(":date");
         HotelOffer cheapestOffer = dataMartConsultant.getCheapestOffer(location, bookingDate);
         return new Gson().toJson(cheapestOffer);
-    }
-
-    private void setupCheapestOffersByWeatherAndDateEndpoint() {
-        get("/cheapest-offers", this::getCheapestOffersByWeatherAndDate);
     }
 
     private String getCheapestOffersByWeatherAndDate(Request request, Response response) throws DataMartException {
