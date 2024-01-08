@@ -1,8 +1,10 @@
-package org.ulpgc.dacd.control;
+package org.ulpgc.dacd.control.handlers;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.ulpgc.dacd.model.HotelOfferNode;
+import org.ulpgc.dacd.control.DataMartStore;
+import org.ulpgc.dacd.control.handlers.Handler;
+import org.ulpgc.dacd.model.HotelOfferRecord;
 
 public class HotelOfferHandler implements Handler {
     private DataMartStore dataMartStore;
@@ -14,14 +16,14 @@ public class HotelOfferHandler implements Handler {
     @Override
     public void handleEvent(String eventData) {
         try {
-            HotelOfferNode hotelNode = parseHotelEvent(eventData);
+            HotelOfferRecord hotelNode = parseHotelEvent(eventData);
             dataMartStore.saveHotelOffer(hotelNode);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private HotelOfferNode parseHotelEvent(String eventData) {
+    private HotelOfferRecord parseHotelEvent(String eventData) {
         JsonObject hotelEventJson = parseJson(eventData);
         double tax = hotelEventJson.get("rate").getAsDouble();
         JsonObject locationJson = hotelEventJson.getAsJsonObject("location");
@@ -29,7 +31,7 @@ public class HotelOfferHandler implements Handler {
         String hotelName = locationJson.get("hotelName").getAsString();
         String predictionTime = hotelEventJson.get("predictionTime").getAsString();
         String companyName = hotelEventJson.get("companyName").getAsString();
-        return new HotelOfferNode(hotelName ,tax, locationName, companyName, predictionTime);
+        return new HotelOfferRecord(hotelName ,tax, locationName, companyName, predictionTime);
     }
 
     private JsonObject parseJson(String jsonData) {

@@ -1,5 +1,7 @@
 package org.ulpgc.dacd.control;
 
+import org.ulpgc.dacd.control.handlers.Handler;
+
 import java.util.List;
 
 public class DataMartBuilder {

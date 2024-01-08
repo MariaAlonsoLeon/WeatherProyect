@@ -1,11 +1,10 @@
 package org.ulpgc.dacd.control;
 
-import org.ulpgc.dacd.control.exceptions.DataMartException;
+import org.ulpgc.dacd.control.exceptions.DataMartConsultingException;
 import org.ulpgc.dacd.view.model.HotelOffer;
 import org.ulpgc.dacd.view.model.LocationOfferByWeather;
 import org.ulpgc.dacd.view.model.Offer;
 import org.ulpgc.dacd.view.model.Weather;
-
 import java.sql.*;
 import java.util.*;
 
@@ -17,7 +16,7 @@ public class DataMartConsultant {
         this.dbPath = dbPath;
     }
 
-    public Offer getCheapestHotelOffersByWeatherAndDate(String weatherType, String date) throws DataMartException {
+    public Offer getCheapestOffersByWeatherAndDate(String weatherType, String date) throws DataMartConsultingException {
         List<LocationOfferByWeather> locationOfferByWeathers = new ArrayList<>();
         Map<String, Weather> weatherByLocation = getLocationsByWeatherAndDate(weatherType, date);
         for (String location : weatherByLocation.keySet()) {
@@ -28,7 +27,7 @@ public class DataMartConsultant {
         return new Offer(date, weatherType, locationOfferByWeathers);
     }
 
-    public HotelOffer getCheapestOffer(String location, String date) throws DataMartException {
+    public HotelOffer getCheapestOffer(String location, String date) throws DataMartConsultingException {
         try (Connection connection = connect(dbPath)) {
             String tableName = "HotelOffers";
             if (!isDateTimeAndLocationInTable(connection, tableName, location, date)) return null;
@@ -38,7 +37,7 @@ public class DataMartConsultant {
                 return processHotelOfferResultSet(resultSet);
             }
         } catch (SQLException e) {
-            throw new DataMartException("Error getting cheapest offer", e);
+            throw new DataMartConsultingException("Error getting cheapest offer", e);
         }
     }
 
@@ -64,7 +63,7 @@ public class DataMartConsultant {
         return null;
     }
 
-    public Map<String, Weather> getLocationsByWeatherAndDate(String weatherType, String date) throws DataMartException {
+    public Map<String, Weather> getLocationsByWeatherAndDate(String weatherType, String date) throws DataMartConsultingException {
         Map<String, Weather> weatherMap = new HashMap<>();
         try (Connection connection = connect(dbPath)) {
             String tableName = "Weathers";
@@ -75,7 +74,7 @@ public class DataMartConsultant {
                 processWeatherResultSet(resultSet, weatherMap);
             }
         } catch (SQLException e) {
-            throw new DataMartException("Error getting cheapest offer", e);
+            throw new DataMartConsultingException("Error getting cheapest offer", e);
         }
         return weatherMap;
     }
