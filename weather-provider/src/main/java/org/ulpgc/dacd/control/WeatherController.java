@@ -5,7 +5,6 @@ import org.ulpgc.dacd.model.Location;
 import org.ulpgc.dacd.model.Weather;
 
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -20,11 +19,13 @@ public class WeatherController {
     private final List<Location> locations;
     private final WeatherSupplier weatherSupplier;
     private final WeatherStore weatherStore;
+    private final String locationsFilePath;
 
-    public WeatherController(WeatherSupplier weatherSupplier, WeatherStore weatherStore) {
-        this.locations = loadLocations();
+    public WeatherController(WeatherSupplier weatherSupplier, WeatherStore weatherStore, String locationsFilePath) {
         this.weatherSupplier = weatherSupplier;
         this.weatherStore = weatherStore;
+        this.locationsFilePath = locationsFilePath;
+        this.locations = loadLocations();
     }
 
     public void execute() {
@@ -51,8 +52,8 @@ public class WeatherController {
         }
     }
 
-    private static List<Location> loadLocations() {
-        List<String> lines = readLinesFromFile("locations.tsv");
+    private List<Location> loadLocations() {
+        List<String> lines = readLinesFromFile(this.locationsFilePath);
         return parseLinesToLocations(lines);
     }
 
@@ -73,11 +74,10 @@ public class WeatherController {
         List<Location> locations = new ArrayList<>();
         for (String line : lines) {
             Location location = parseLineToLocation(line);
-            if (location != null) {
+            if (location != null && !locations.contains(location)) {
                 locations.add(location);
             }
         }
-        System.out.println(locations);
         return locations;
     }
 
