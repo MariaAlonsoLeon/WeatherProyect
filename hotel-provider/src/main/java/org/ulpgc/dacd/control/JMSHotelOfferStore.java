@@ -32,7 +32,6 @@ public class JMSHotelOfferStore implements HotelOfferStore {
             throw new StoreException(e.getMessage());
         }
     }
-
     private Connection createConnection() throws JMSException {
         ConnectionFactory connectionFactory = new ActiveMQConnectionFactory(brokerUrl);
         return connectionFactory.createConnection();

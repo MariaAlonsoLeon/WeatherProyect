@@ -28,6 +28,7 @@ public class XoteloHotelOfferSupplier implements HotelOfferSupplier {
         List<HotelOffer> hotelOffersList = new ArrayList<>();
         for (String currentDate : dates) {
             String url = buildUrl(location.hotelKey(), currentDate);
+            System.out.println(url);
             hotelOffersList.addAll(parseHotelOffers(url, location, currentDate));
         }
         return hotelOffersList;
@@ -42,9 +43,14 @@ public class XoteloHotelOfferSupplier implements HotelOfferSupplier {
         try {
             String jsonData = getHotelOfferFromUrl(url);
             JsonObject jsonObject = JsonParser.parseString(jsonData).getAsJsonObject();
-            JsonObject result = jsonObject.getAsJsonObject("result");
-            JsonArray rates = result.getAsJsonArray("rates");
-            return rates != null ? createHotelOfferList(rates, location, predictionTime) : new ArrayList<>();
+            if (jsonObject.has("result") && !jsonObject.get("result").isJsonNull()) {
+                JsonObject result = jsonObject.getAsJsonObject("result");
+                JsonArray rates = result.getAsJsonArray("rates");
+                if (rates != null) {
+                    return createHotelOfferList(rates, location, predictionTime);
+                }
+            }
+            return new ArrayList<>();
         } catch (IOException e) {
             handleException("Error fetching or parsing hotel data", e);
             return new ArrayList<>();
@@ -81,7 +87,7 @@ public class XoteloHotelOfferSupplier implements HotelOfferSupplier {
     }
 
     private String getCurrentDate() {
-        LocalDate tomorrow = LocalDate.now();
+        LocalDate tomorrow = LocalDate.now().plusDays(1);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         return tomorrow.format(formatter);
     }

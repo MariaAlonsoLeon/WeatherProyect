@@ -57,11 +57,12 @@ public class HotelOfferController {
     private List<String> generateDateList() {
         List<String> dateList = new ArrayList<>();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        LocalDate currentDate = LocalDate.now().plusDays(1);
+        LocalDate currentDate = LocalDate.now().plusDays(2);
 
         for (int i = 0; i < 5; i++) {
             dateList.add(currentDate.plusDays(i).format(formatter));
         }
+        System.out.println(dateList);
         return dateList;
     }
     private List<Location> loadLocations() {
