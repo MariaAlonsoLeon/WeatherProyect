@@ -61,6 +61,7 @@ public class TopicSubscriber implements Subscriber {
             try {
                 String receivedMessage = ((TextMessage) message).getText();
                 Handler handler = topicHandlers.get(topicName);
+                System.out.println(message);
                 if (handler != null) { handler.handleEvent(receivedMessage);
                 } else { System.out.println("No handler registered for topic: " + topicName);
                 }
