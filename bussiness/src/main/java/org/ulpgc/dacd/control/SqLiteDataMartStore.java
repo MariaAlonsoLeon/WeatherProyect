@@ -3,7 +3,7 @@ package org.ulpgc.dacd.control;
 import org.ulpgc.dacd.control.exceptions.DataMartStoreException;
 import org.ulpgc.dacd.model.HotelOfferRecord;
 import org.ulpgc.dacd.model.WeatherRecord;
-import org.ulpgc.dacd.view.model.HotelOffer;
+
 import java.sql.*;
 
 public class SqLiteDataMartStore implements DataMartStore {
@@ -61,18 +61,32 @@ public class SqLiteDataMartStore implements DataMartStore {
                 ");");
     }
 
-    private static void updateOrInsertHotelOffer(HotelOfferRecord hotelOfferRecord, Connection connection, String tableName) throws SQLException {
+
+    private static void updateOrInsertHotelOffer(HotelOfferRecord hotelOfferRecord, Connection connection, String tableName)
+            throws SQLException {
         String location = hotelOfferRecord.locationName();
         String predictionTime = String.valueOf(hotelOfferRecord.predictionTime());
-        Double newPrice = hotelOfferRecord.tax();
         if (isDateTimeAndLocationInTable(connection, tableName, location, predictionTime)) {
-            HotelOffer currentHotelOffer = getCurrentHotelOffer(connection, tableName, location, predictionTime);
-            if (currentHotelOffer.companyName().equals(hotelOfferRecord.companyName()) || newPrice < currentHotelOffer.cost()) {
+            HotelOfferRecord currentHotelOffer = getCurrentHotelOffer(connection, tableName, location, predictionTime);
+            if(updateCurrentHotelOfferRecord(currentHotelOffer, hotelOfferRecord)){
                 updateHotelOffer(connection, hotelOfferRecord);
             }
         } else {
             insertHotelOffer(connection, hotelOfferRecord);
         }
+    }
+
+    private static boolean updateCurrentHotelOfferRecord(HotelOfferRecord currentHotelOffer, HotelOfferRecord hotelOfferRecord){
+        boolean result = false;
+        if((currentHotelOffer.companyName().equals(hotelOfferRecord.companyName()) &&
+                currentHotelOffer.name().equals(hotelOfferRecord.name())))
+        {
+            result = true;
+        }
+        else if (hotelOfferRecord.tax() < currentHotelOffer.tax()) {
+            result = true;
+        }
+        return result;
     }
 
     private static void insertHotelOffer(Connection connection, HotelOfferRecord hotelOfferRecord) throws SQLException {
@@ -89,6 +103,7 @@ public class SqLiteDataMartStore implements DataMartStore {
         String tableName = "HotelOffers";
         String updateSQL = String.format(
                 "UPDATE %s SET name = ?, companyName = ?, price = ? WHERE location = ? AND date = ?", tableName);
+
         try (PreparedStatement preparedStatement = connection.prepareStatement(updateSQL)) {
             setUpdateHotelOfferParameters(preparedStatement, hotelOfferRecord);
             preparedStatement.executeUpdate();
@@ -111,24 +126,24 @@ public class SqLiteDataMartStore implements DataMartStore {
         preparedStatement.setString(5, String.valueOf(hotelOfferRecord.predictionTime()));
     }
 
-    private static HotelOffer getCurrentHotelOffer(Connection connection, String tableName, String location, String predictionTime) throws SQLException {
+    private static HotelOfferRecord getCurrentHotelOffer(Connection connection, String tableName, String location, String predictionTime)
+            throws SQLException {
         String query = "SELECT name, companyName, price FROM " + tableName + " WHERE location = ? AND date = ?";
         try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
             preparedStatement.setString(1, location);
             preparedStatement.setString(2, predictionTime);
+
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                return resultSet.next() ? createHotelOfferFromResultSet(resultSet) : null;
+                if (resultSet.next()) {
+                    String name = resultSet.getString("name");
+                    String company = resultSet.getString("companyName");
+                    double price = resultSet.getDouble("price");
+                    return new HotelOfferRecord(name, price, location, company, predictionTime);
+                }
             }
         }
+        return null;
     }
-
-    private static HotelOffer createHotelOfferFromResultSet(ResultSet resultSet) throws SQLException {
-        String name = resultSet.getString("name");
-        String company = resultSet.getString("companyName");
-        double price = resultSet.getDouble("price");
-        return new HotelOffer(name, company, price);
-    }
-
     private static void updateOrInsertWeatherData(WeatherRecord weatherRecord, Connection connection, String tableName)
             throws SQLException {
         if (isDateTimeAndLocationInTable(connection, tableName, weatherRecord.location(), weatherRecord.predictionTime())) {
@@ -142,6 +157,7 @@ public class SqLiteDataMartStore implements DataMartStore {
         String tableName = "Weathers";
         String insertSQL = String.format(
                 "INSERT INTO %s (location, date, temperature, rainProbability, humidity, clouds, windSpeed, weatherType) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", tableName);
+
         try (PreparedStatement preparedStatement = connection.prepareStatement(insertSQL)) {
             setInsertWeatherParameters(preparedStatement, weatherRecord);
             preparedStatement.executeUpdate();
@@ -152,6 +168,7 @@ public class SqLiteDataMartStore implements DataMartStore {
         String tableName = "Weathers";
         String updateSQL = String.format(
                 "UPDATE %s SET temperature = ?, rainProbability = ?, humidity = ?, clouds = ?, windSpeed = ?, weatherType = ? WHERE location = ? AND date = ?", tableName);
+
         try (PreparedStatement preparedStatement = connection.prepareStatement(updateSQL)) {
             setUpdateWeatherParameters(preparedStatement, weatherRecord);
             preparedStatement.executeUpdate();
