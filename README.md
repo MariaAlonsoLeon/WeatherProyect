@@ -112,7 +112,7 @@ The application was developed in the IntelliJ environment and uses Maven. It fol
             *   `/locations`
                 *   Method: GET
                 *   Response: Retrieves meteorological information that meets specified weather type and date parameters.
-                *   Example Response:
+                *   Example Response: On these examples we use huge variety of locations to show the API versatility. But if you want you can choose other locations.
     ![/locations example](locationsPhoto.png)
             *   `/offer/:location/:date`
                 *   Method: GET
