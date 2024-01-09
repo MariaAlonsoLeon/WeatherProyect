@@ -2,8 +2,12 @@ package org.ulpgc.dacd.control.commands;
 
 import org.ulpgc.dacd.control.exceptions.DataMartConsultingException;
 import org.ulpgc.dacd.view.model.HotelOffer;
-import org.ulpgc.dacd.view.model.Output;
-import java.sql.*;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.List;
 
 public class GetCheapestOfferByLocationAndDateCommand implements Command {
@@ -14,9 +18,9 @@ public class GetCheapestOfferByLocationAndDateCommand implements Command {
     }
 
     @Override
-    public Output execute(List<String> params) throws DataMartConsultingException {
-        String location  = params.get(0);
-        String date  = params.get(1);
+    public HotelOffer execute(List<String> params) throws DataMartConsultingException {
+        String location = params.get(0);
+        String date = params.get(1);
         try (Connection connection = connect(dbPath)) {
             String tableName = "HotelOffers";
             if (!isDateTimeAndLocationInTable(connection, tableName, location, date)) return null;
@@ -45,6 +49,7 @@ public class GetCheapestOfferByLocationAndDateCommand implements Command {
         String url = "jdbc:sqlite:" + dbPath;
         return DriverManager.getConnection(url);
     }
+
     private String buildHotelOfferQuery(String tableName) {
         return "SELECT price, name, companyName FROM " + tableName + " WHERE location = ? AND date = ? ORDER BY price ASC LIMIT 1";
     }

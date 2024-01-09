@@ -1,10 +1,6 @@
 package org.ulpgc.dacd.control.handlers;
 
 import org.ulpgc.dacd.control.DataMartStore;
-import org.ulpgc.dacd.control.handlers.Handler;
-import org.ulpgc.dacd.control.handlers.HotelOfferHandler;
-import org.ulpgc.dacd.control.handlers.WeatherHandler;
-
 import java.util.HashMap;
 import java.util.Map;
 

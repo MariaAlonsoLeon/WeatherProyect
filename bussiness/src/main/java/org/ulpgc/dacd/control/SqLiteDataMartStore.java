@@ -1,11 +1,10 @@
 package org.ulpgc.dacd.control;
 
 import org.ulpgc.dacd.control.exceptions.DataMartStoreException;
-import org.ulpgc.dacd.model.HotelOfferNode;
-import org.ulpgc.dacd.model.WeatherNode;
-
+import org.ulpgc.dacd.model.HotelOfferRecord;
+import org.ulpgc.dacd.model.WeatherRecord;
+import org.ulpgc.dacd.view.model.HotelOffer;
 import java.sql.*;
-import java.time.Instant;
 
 public class SqLiteDataMartStore implements DataMartStore {
 
@@ -15,30 +14,29 @@ public class SqLiteDataMartStore implements DataMartStore {
         this.dbPath = dbPath;
     }
 
-    public void saveHotelOffer(HotelOfferNode hotelDataEntry) throws DataMartStoreException {
+    public void saveHotelOffer(HotelOfferRecord hotelOfferRecord) throws DataMartStoreException {
         String tableName = "HotelOffers";
         try (Connection connection = connect(dbPath)) {
             Statement statement = connection.createStatement();
-            createHotelTable(statement, tableName);
-            updateOrInsertHotelData(hotelDataEntry, connection, tableName);
+            createHotelOfferTable(statement, tableName);
+            updateOrInsertHotelOffer(hotelOfferRecord, connection, tableName);
         } catch (SQLException e) {
             throw new DataMartStoreException("Error saving hotel offer", e);
         }
     }
 
-    public void saveWeather(WeatherNode weatherDataEntry) throws DataMartStoreException {
+    public void saveWeather(WeatherRecord weatherRecord) throws DataMartStoreException {
         String tableName = "Weathers";
         try (Connection connection = connect(dbPath)) {
             Statement statement = connection.createStatement();
             createWeatherTable(statement, tableName);
-            updateOrInsertWeatherData(weatherDataEntry, connection, tableName);
+            updateOrInsertWeatherData(weatherRecord, connection, tableName);
         } catch (SQLException e) {
             throw new DataMartStoreException("Error saving weather data", e);
         }
     }
 
-    private static void createHotelTable(Statement statement, String tableName) throws SQLException {
-        System.out.println("Tabla creada");
+    private static void createHotelOfferTable(Statement statement, String tableName) throws SQLException {
         statement.execute("CREATE TABLE IF NOT EXISTS " + tableName + " (" +
                 "location TEXT," +
                 "date TEXT," +
@@ -63,101 +61,123 @@ public class SqLiteDataMartStore implements DataMartStore {
                 ");");
     }
 
-    private static void updateOrInsertHotelData(HotelOfferNode hotelDataEntry, Connection connection, String tableName)
-            throws SQLException {
-        if (isDateTimeAndLocationInTable(connection, tableName, hotelDataEntry.locationName(), hotelDataEntry.predictionTime())) {
-            updateHotelData(connection, hotelDataEntry);
+    private static void updateOrInsertHotelOffer(HotelOfferRecord hotelOfferRecord, Connection connection, String tableName) throws SQLException {
+        String location = hotelOfferRecord.locationName();
+        String predictionTime = String.valueOf(hotelOfferRecord.predictionTime());
+        Double newPrice = hotelOfferRecord.tax();
+        if (isDateTimeAndLocationInTable(connection, tableName, location, predictionTime)) {
+            HotelOffer currentHotelOffer = getCurrentHotelOffer(connection, tableName, location, predictionTime);
+            if (currentHotelOffer.companyName().equals(hotelOfferRecord.companyName()) || newPrice < currentHotelOffer.cost()) {
+                updateHotelOffer(connection, hotelOfferRecord);
+            }
         } else {
-            insertHotelData(connection, hotelDataEntry);
+            insertHotelOffer(connection, hotelOfferRecord);
         }
     }
 
-    private static void insertHotelData(Connection connection, HotelOfferNode hotelDataEntry) throws SQLException {
+    private static void insertHotelOffer(Connection connection, HotelOfferRecord hotelOfferRecord) throws SQLException {
         String tableName = "HotelOffers";
         String insertSQL = String.format(
                 "INSERT INTO %s (location, date, name, companyName, price) VALUES (?, ?, ? , ?, ?)", tableName);
         try (PreparedStatement preparedStatement = connection.prepareStatement(insertSQL)) {
-            setInsertHotelParameters(preparedStatement, hotelDataEntry);
+            setInsertHotelOfferParameters(preparedStatement, hotelOfferRecord);
             preparedStatement.executeUpdate();
         }
     }
 
-    private static void updateHotelData(Connection connection, HotelOfferNode hotelDataEntry) throws SQLException {
+    private static void updateHotelOffer(Connection connection, HotelOfferRecord hotelOfferRecord) throws SQLException {
         String tableName = "HotelOffers";
         String updateSQL = String.format(
-                "UPDATE %s SET price = ? WHERE location = ? AND date = ?", tableName);
-
+                "UPDATE %s SET name = ?, companyName = ?, price = ? WHERE location = ? AND date = ?", tableName);
         try (PreparedStatement preparedStatement = connection.prepareStatement(updateSQL)) {
-            setUpdateHotelParameters(preparedStatement, hotelDataEntry);
+            setUpdateHotelOfferParameters(preparedStatement, hotelOfferRecord);
             preparedStatement.executeUpdate();
         }
     }
 
-    private static void setInsertHotelParameters(PreparedStatement preparedStatement, HotelOfferNode hotelDataEntry) throws SQLException {
-        preparedStatement.setString(1, hotelDataEntry.locationName());
-        preparedStatement.setString(2, String.valueOf(hotelDataEntry.predictionTime()));
-        preparedStatement.setString(3, hotelDataEntry.name());
-        preparedStatement.setString(4, hotelDataEntry.companyName());
-        preparedStatement.setDouble(5, hotelDataEntry.tax());
+    private static void setInsertHotelOfferParameters(PreparedStatement preparedStatement, HotelOfferRecord hotelOfferRecord) throws SQLException {
+        preparedStatement.setString(1, hotelOfferRecord.locationName());
+        preparedStatement.setString(2, String.valueOf(hotelOfferRecord.predictionTime()));
+        preparedStatement.setString(3, hotelOfferRecord.name());
+        preparedStatement.setString(4, hotelOfferRecord.companyName());
+        preparedStatement.setDouble(5, hotelOfferRecord.tax());
     }
 
-    private static void setUpdateHotelParameters(PreparedStatement preparedStatement, HotelOfferNode hotelDataEntry) throws SQLException {
-        preparedStatement.setDouble(1, hotelDataEntry.tax());
-        preparedStatement.setString(2, hotelDataEntry.locationName());
-        preparedStatement.setString(3, String.valueOf(hotelDataEntry.predictionTime()));
+    private static void setUpdateHotelOfferParameters(PreparedStatement preparedStatement, HotelOfferRecord hotelOfferRecord) throws SQLException {
+        preparedStatement.setString(1, hotelOfferRecord.name());
+        preparedStatement.setString(2, hotelOfferRecord.companyName());
+        preparedStatement.setDouble(3, hotelOfferRecord.tax());
+        preparedStatement.setString(4, hotelOfferRecord.locationName());
+        preparedStatement.setString(5, String.valueOf(hotelOfferRecord.predictionTime()));
     }
 
-    private static void updateOrInsertWeatherData(WeatherNode weatherDataEntry, Connection connection, String tableName)
-            throws SQLException {
-        if (isDateTimeAndLocationInTable(connection, tableName, weatherDataEntry.location(), weatherDataEntry.predictionTime())) {
-            updateWeatherData(connection, weatherDataEntry);
-        } else {
-            insertWeatherData(connection, weatherDataEntry);
+    private static HotelOffer getCurrentHotelOffer(Connection connection, String tableName, String location, String predictionTime) throws SQLException {
+        String query = "SELECT name, companyName, price FROM " + tableName + " WHERE location = ? AND date = ?";
+        try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            preparedStatement.setString(1, location);
+            preparedStatement.setString(2, predictionTime);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                return resultSet.next() ? createHotelOfferFromResultSet(resultSet) : null;
+            }
         }
     }
 
-    private static void insertWeatherData(Connection connection, WeatherNode weatherDataEntry) throws SQLException {
+    private static HotelOffer createHotelOfferFromResultSet(ResultSet resultSet) throws SQLException {
+        String name = resultSet.getString("name");
+        String company = resultSet.getString("companyName");
+        double price = resultSet.getDouble("price");
+        return new HotelOffer(name, company, price);
+    }
+
+    private static void updateOrInsertWeatherData(WeatherRecord weatherRecord, Connection connection, String tableName)
+            throws SQLException {
+        if (isDateTimeAndLocationInTable(connection, tableName, weatherRecord.location(), weatherRecord.predictionTime())) {
+            updateWeather(connection, weatherRecord);
+        } else {
+            insertWeather(connection, weatherRecord);
+        }
+    }
+
+    private static void insertWeather(Connection connection, WeatherRecord weatherRecord) throws SQLException {
         String tableName = "Weathers";
         String insertSQL = String.format(
                 "INSERT INTO %s (location, date, temperature, rainProbability, humidity, clouds, windSpeed, weatherType) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", tableName);
-
         try (PreparedStatement preparedStatement = connection.prepareStatement(insertSQL)) {
-            setInsertWeatherParameters(preparedStatement, weatherDataEntry);
+            setInsertWeatherParameters(preparedStatement, weatherRecord);
             preparedStatement.executeUpdate();
         }
     }
 
-    private static void updateWeatherData(Connection connection, WeatherNode weatherDataEntry) throws SQLException {
+    private static void updateWeather(Connection connection, WeatherRecord weatherRecord) throws SQLException {
         String tableName = "Weathers";
         String updateSQL = String.format(
                 "UPDATE %s SET temperature = ?, rainProbability = ?, humidity = ?, clouds = ?, windSpeed = ?, weatherType = ? WHERE location = ? AND date = ?", tableName);
-
         try (PreparedStatement preparedStatement = connection.prepareStatement(updateSQL)) {
-            setUpdateWeatherParameters(preparedStatement, weatherDataEntry);
+            setUpdateWeatherParameters(preparedStatement, weatherRecord);
             preparedStatement.executeUpdate();
         }
     }
 
-    private static void setInsertWeatherParameters(PreparedStatement preparedStatement, WeatherNode weatherDataEntry) throws SQLException {
-        preparedStatement.setString(1, weatherDataEntry.location());
-        preparedStatement.setString(2, String.valueOf(weatherDataEntry.predictionTime()));
-        preparedStatement.setDouble(3, weatherDataEntry.temperature());
-        preparedStatement.setDouble(4, weatherDataEntry.rainProbability());
-        preparedStatement.setDouble(5, weatherDataEntry.clouds());
-        preparedStatement.setInt(6, weatherDataEntry.humidity());
-        preparedStatement.setDouble(7, weatherDataEntry.windSpeed());
-        preparedStatement.setString(8, String.valueOf(weatherDataEntry.weatherType()));
+    private static void setInsertWeatherParameters(PreparedStatement preparedStatement, WeatherRecord weatherRecord) throws SQLException {
+        preparedStatement.setString(1, weatherRecord.location());
+        preparedStatement.setString(2, String.valueOf(weatherRecord.predictionTime()));
+        preparedStatement.setDouble(3, weatherRecord.temperature());
+        preparedStatement.setDouble(4, weatherRecord.rainProbability());
+        preparedStatement.setDouble(5, weatherRecord.clouds());
+        preparedStatement.setInt(6, weatherRecord.humidity());
+        preparedStatement.setDouble(7, weatherRecord.windSpeed());
+        preparedStatement.setString(8, String.valueOf(weatherRecord.weatherType()));
     }
 
-    private static void setUpdateWeatherParameters(PreparedStatement preparedStatement, WeatherNode weatherDataEntry) throws SQLException {
-        preparedStatement.setDouble(1, weatherDataEntry.temperature());
-        preparedStatement.setDouble(2, weatherDataEntry.rainProbability());
-        preparedStatement.setInt(3, weatherDataEntry.humidity());
-        preparedStatement.setDouble(4, weatherDataEntry.clouds());
-        preparedStatement.setDouble(5, weatherDataEntry.windSpeed());
-        preparedStatement.setString(6, String.valueOf(weatherDataEntry.weatherType()));
-        preparedStatement.setString(7, weatherDataEntry.location());
-        preparedStatement.setString(8, String.valueOf(weatherDataEntry.predictionTime()));
+    private static void setUpdateWeatherParameters(PreparedStatement preparedStatement, WeatherRecord weatherRecord) throws SQLException {
+        preparedStatement.setDouble(1, weatherRecord.temperature());
+        preparedStatement.setDouble(2, weatherRecord.rainProbability());
+        preparedStatement.setInt(3, weatherRecord.humidity());
+        preparedStatement.setDouble(4, weatherRecord.clouds());
+        preparedStatement.setDouble(5, weatherRecord.windSpeed());
+        preparedStatement.setString(6, String.valueOf(weatherRecord.weatherType()));
+        preparedStatement.setString(7, weatherRecord.location());
+        preparedStatement.setString(8, String.valueOf(weatherRecord.predictionTime()));
     }
 
     private static boolean isDateTimeAndLocationInTable(Connection connection, String tableName, String location, String predictionTime)
@@ -187,18 +207,18 @@ public class SqLiteDataMartStore implements DataMartStore {
         return connection;
     }
 
-    public void clearTables() throws DataMartStoreException {
+    public void dropDatabase() throws DataMartStoreException {
         try (Connection connection = connect(dbPath)) {
-            clearTable(connection, "HotelOffers");
-            clearTable(connection, "Weathers");
+            dropTable(connection, "HotelOffers");
+            dropTable(connection, "Weathers");
         } catch (SQLException e) {
-            throw new DataMartStoreException("Error clearing tables", e);
+            throw new DataMartStoreException("Error dropping the database", e);
         }
     }
 
-    private static void clearTable(Connection connection, String tableName) throws SQLException {
-        String deleteSQL = "DELETE FROM " + tableName;
-        try (PreparedStatement preparedStatement = connection.prepareStatement(deleteSQL)) {
+    private static void dropTable(Connection connection, String tableName) throws SQLException {
+        String dropSQL = "DROP TABLE IF EXISTS " + tableName;
+        try (PreparedStatement preparedStatement = connection.prepareStatement(dropSQL)) {
             preparedStatement.executeUpdate();
         }
     }

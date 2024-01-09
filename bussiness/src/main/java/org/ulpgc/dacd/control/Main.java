@@ -1,7 +1,11 @@
 package org.ulpgc.dacd.control;
 
+import org.ulpgc.dacd.control.commands.Command;
+import org.ulpgc.dacd.control.commands.CommandFactory;
 import org.ulpgc.dacd.control.exceptions.EventReceiverException;
 import org.ulpgc.dacd.control.exceptions.DataMartStoreException;
+import org.ulpgc.dacd.control.handlers.Handler;
+import org.ulpgc.dacd.control.handlers.HandlerFactory;
 import org.ulpgc.dacd.view.HotelRecommendationAPI;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -21,32 +25,23 @@ public class Main {
     }
 
     private void run(String[] args) {
-        clearTables(args);
         String brokerUrl = "tcp://localhost:61616";
-        if (args.length < 4) {
-            logger.severe("Insufficient arguments. Usage: Main <baseDirectory> <topic1> <topic2> ...");
+        if (args.length < 2) {
+            logger.severe("Insufficient arguments. Usage: Main <baseDataLakeDirectory> <baseDataMartDirectory> ...");
         }
-
-        try {
-            //Map<String, String> topicNames = handlersOf(Arrays.asList(args[2], args[3]));
-            List<String> topicNames = Arrays.asList(args[2], args[3]);
-            DataLakeAccessor dataLakeAccessor = new DataLakeAccessor(args[0]);
-            DataMartStore dataMartStore = new SqLiteDataMartStore(args[1]);
-            Map<String, Handler> handlerMap = initializeHandlers(dataMartStore, topicNames);
-            TopicSubscriber topicSubscriber = new TopicSubscriber(brokerUrl, topicNames, "clientId", handlerMap);
-            DataMartBuilder dataMartBuilder = new DataMartBuilder(dataLakeAccessor, handlerMap.get(topicNames.get(0)), handlerMap.get(topicNames.get(1)));
-            dataMartBuilder.buildDataMart();
-            DataMartConsultant dataMartConsultant = new DataMartConsultant(args[1]);
-            HotelRecommendationAPI hotelAPI = new HotelRecommendationAPI(dataMartConsultant);
-            hotelAPI.init();
-            startTopicSubscriber(topicSubscriber);
-        } finally {
-
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                logger.info("Cerrando la aplicación. Limpiando datos de las tablas...");
-                logger.info("Datos de las tablas limpiados.");
-            }));
-        }
+        dropTables(args[1]);
+        List<String> topicNames = Arrays.asList("prediction.Weather", "prediction.Hotel");
+        DataMartStore dataMartStore = new SqLiteDataMartStore(args[1]);
+        DataLakeAccessor dataLakeAccessor = new DataLakeAccessor(args[0]);
+        Map<String, Handler> handlerMap = initializeHandlers(dataMartStore, topicNames);
+        Subscriber topicSubscriber = new TopicSubscriber(brokerUrl, topicNames, "WeatherResponsiveHotelOfferAdvisor", handlerMap);
+        DataMartBuilder dataMartBuilder = new DataMartBuilder(dataLakeAccessor, handlerMap);
+        dataMartBuilder.buildDataMart();
+        CommandFactory commandFactory = new CommandFactory(args[1]);
+        Map<String, Command> commands = initializeCommands(commandFactory);
+        HotelRecommendationAPI hotelAPI = new HotelRecommendationAPI(commands);
+        hotelAPI.init();
+        startTopicSubscriber(topicSubscriber);
     }
 
     private Map<String, Handler> initializeHandlers(DataMartStore dataMartStore, List<String> topicsName) {
@@ -58,32 +53,29 @@ public class Main {
         return handlerMap;
     }
 
-    /*private Map<String, Handler> initializeHandlers(DataMartStore dataMartStore, Map<String, String> handlers) {
-        HandlerFactory handlerFactory = new HandlerFactory(dataMartStore);
-        Map<String, Handler> handlerMap = new HashMap<>();
-        for (String topicName : handlers.keySet()) {
-            handlerMap.put(handlers.get(topicName), handlerFactory.create(topicName));
-        }
-        return handlerMap;
-    }*/
+    private Map<String, Command> initializeCommands(CommandFactory commandFactory) {
+        Map<String, Command> commands = new HashMap<>();
+        commands.put("getCheapestOffersByWeatherAndDate", commandFactory.create("getCheapestOffersByWeatherAndDate"));
+        commands.put("getLocationsByWeatherAndDate", commandFactory.create("getLocationsByWeatherAndDate"));
+        commands.put("getCheapestOfferByLocationAndDate", commandFactory.create("getCheapestOfferByLocationAndDate"));
+        return commands;
+    }
 
-    private void startTopicSubscriber(TopicSubscriber topicSubscriber) {
+    private void startTopicSubscriber(Subscriber subscriber) {
         ExecutorService executorService = Executors.newSingleThreadExecutor();
         executorService.submit(() -> {
             try {
-                topicSubscriber.start();
+                subscriber.start();
             } catch (EventReceiverException e) {
                 logger.log(Level.SEVERE, "Error starting TopicSubscriber", e);
             }
         });
-        executorService.shutdown();
     }
 
-    private void clearTables(String[] args) { //Eliminar la base de datos
+    private void dropTables(String dataMartDirectory) {
         try {
-            String dataMartDirectory = args[1];
             DataMartStore dataMartStore = new SqLiteDataMartStore(dataMartDirectory);
-            ((SqLiteDataMartStore) dataMartStore).clearTables();
+            ((SqLiteDataMartStore) dataMartStore).dropDatabase();
         } catch (DataMartStoreException e) {
             logger.log(Level.SEVERE, "Error clearing tables", e);
         }

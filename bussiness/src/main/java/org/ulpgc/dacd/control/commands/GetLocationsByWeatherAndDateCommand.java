@@ -1,7 +1,6 @@
 package org.ulpgc.dacd.control.commands;
 
 import org.ulpgc.dacd.control.exceptions.DataMartConsultingException;
-import org.ulpgc.dacd.view.model.Output;
 import org.ulpgc.dacd.view.model.WeatherByLocation;
 import org.ulpgc.dacd.view.model.WeathersByLocations;
 
@@ -17,7 +16,7 @@ public class GetLocationsByWeatherAndDateCommand implements Command {
     }
 
     @Override
-    public Output execute(List<String> params) throws DataMartConsultingException {
+    public WeathersByLocations execute(List<String> params) throws DataMartConsultingException {
         String weatherType = params.get(0);
         String date = params.get(1);
         List<WeatherByLocation> weatherByLocations = new ArrayList<>();

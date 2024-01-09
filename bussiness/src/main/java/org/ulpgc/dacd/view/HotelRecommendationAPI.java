@@ -2,7 +2,6 @@ package org.ulpgc.dacd.view;
 
 import com.google.gson.Gson;
 import org.ulpgc.dacd.control.commands.Command;
-import org.ulpgc.dacd.control.DataMartConsultant;
 import org.ulpgc.dacd.control.exceptions.DataMartConsultingException;
 import org.ulpgc.dacd.view.model.HotelOffer;
 import org.ulpgc.dacd.view.model.WeathersByLocations;
@@ -15,15 +14,14 @@ import java.util.Map;
 import static spark.Spark.*;
 
 public class HotelRecommendationAPI {
-    private final DataMartConsultant dataMartConsultant;
     private final Map<String, Command> commands;
 
-    public HotelRecommendationAPI(DataMartConsultant dataMartConsultant, Map<String, Command> commands) {
-        this.dataMartConsultant = dataMartConsultant;
+    public HotelRecommendationAPI(Map<String, Command> commands) {
         this.commands = commands;
     }
 
     public void init() {
+        port(8080);
         staticFiles.location("/public");
         get("/locations", this::getLocations);
         get("/offer/:location/:date", this::getCheapestOffer);
@@ -35,8 +33,6 @@ public class HotelRecommendationAPI {
         String weatherType = request.queryParams("weather");
         String date = request.queryParams("date");
         WeathersByLocations locations = (WeathersByLocations) commands.get("getLocationsByWeatherAndDate").execute(List.of(weatherType, date));
-        //Map<String, Weather> locations = dataMartConsultant.getLocationsByWeatherAndDate(weatherType, date);
-        //System.out.println(locations);
         return new Gson().toJson(locations);
     }
 
@@ -45,7 +41,6 @@ public class HotelRecommendationAPI {
         String location = request.params(":location");
         String bookingDate = request.params(":date");
         HotelOffer cheapestOffer = (HotelOffer) commands.get("getCheapestOfferByLocationAndDate").execute(List.of(location, bookingDate));
-        //HotelOffer cheapestOffer = dataMartConsultant.getCheapestOffer(location, bookingDate);
         return new Gson().toJson(cheapestOffer);
     }
 
@@ -54,7 +49,6 @@ public class HotelRecommendationAPI {
         String weatherType = request.queryParams("weather");
         String date = request.queryParams("date");
         Offer cheapestOffers = (Offer) commands.get("getCheapestOffersByWeatherAndDate").execute(List.of(weatherType,date));
-        //Offer cheapestOffers = dataMartConsultant.getCheapestOffersByWeatherAndDate(weatherType, date);
         return new Gson().toJson(cheapestOffers);
     }
 }

@@ -20,15 +20,4 @@ public class HotelOffer {
         this.predictionTime = predictionTime;
     }
 
-    @Override
-    public String toString() {
-        return "HotelTaxes{" +
-                "ss='" + ss + '\'' +
-                ", ts=" + ts +
-                ", predictionTime='" + predictionTime + '\'' +
-                ", name='" + companyName + '\'' +
-                ", tax=" + rate +
-                ", location=" + location +
-                '}';
-    }
 }

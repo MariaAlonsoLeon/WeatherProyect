@@ -2,8 +2,8 @@ package org.ulpgc.dacd.control;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.ulpgc.dacd.control.exceptions.EventReceiverException;
+import org.ulpgc.dacd.control.handlers.Handler;
 import javax.jms.*;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;

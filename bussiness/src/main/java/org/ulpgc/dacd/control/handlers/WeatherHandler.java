@@ -1,8 +1,9 @@
-package org.ulpgc.dacd.control;
+package org.ulpgc.dacd.control.handlers;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.ulpgc.dacd.model.WeatherNode;
+import org.ulpgc.dacd.control.DataMartStore;
+import org.ulpgc.dacd.model.WeatherRecord;
 import org.ulpgc.dacd.model.WeatherType;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -15,17 +16,17 @@ public class WeatherHandler implements Handler {
     }
 
     @Override
-    public void handleEvent(String eventData) {
+    public void handleEvent(String message) {
         try {
-            WeatherNode weatherNode = parseWeatherEvent(eventData);
-            dataMartStore.saveWeather(weatherNode);
+            WeatherRecord weatherRecord = parseWeatherEvent(message);
+            dataMartStore.saveWeather(weatherRecord);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private WeatherNode parseWeatherEvent(String eventData) {
-        JsonObject weatherEventJson = parseJson(eventData);
+    private WeatherRecord parseWeatherEvent(String message) {
+        JsonObject weatherEventJson = parseJson(message);
         String formattedDate = extractAndFormatDate(weatherEventJson);
         JsonObject locationJson = weatherEventJson.getAsJsonObject("location");
         String locationName = locationJson.get("name").getAsString();
@@ -35,7 +36,7 @@ public class WeatherHandler implements Handler {
         float rain = weatherEventJson.get("rain").getAsFloat();
         float windSpeed = weatherEventJson.get("windSpeed").getAsFloat();
         WeatherType weatherType = determineWeatherType(temperature, rain, clouds);
-        return new WeatherNode(formattedDate, locationName, humidity, temperature, clouds, rain, windSpeed ,weatherType);
+        return new WeatherRecord(formattedDate, locationName, humidity, temperature, clouds, rain, windSpeed ,weatherType);
     }
 
     public String extractAndFormatDate(JsonObject weatherEventJson){
@@ -44,10 +45,10 @@ public class WeatherHandler implements Handler {
         return dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
     }
 
-    private JsonObject parseJson(String jsonData) {
+    private JsonObject parseJson(String message) {
         try {
             JsonParser parser = new JsonParser();
-            return parser.parse(jsonData).getAsJsonObject();
+            return parser.parse(message).getAsJsonObject();
         } catch (Exception e) {
             e.printStackTrace();
             return new JsonObject();

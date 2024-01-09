@@ -12,29 +12,18 @@ import java.util.stream.Stream;
 
 public class DataLakeAccessor {
     private static final Logger logger = Logger.getLogger(DataLakeAccessor.class.getName());
-    private final String dataLakeDirectory;
-    private static final int MAX_EVENTS = 40;
+    private final String dataLakeDirectory;;
 
     public DataLakeAccessor(String dataLakeDirectory) {
         this.dataLakeDirectory = dataLakeDirectory;
     }
 
-    public List<String> getWeatherData() {
-        return getLatestEventData("prediction.Weather", "weather-provider", MAX_EVENTS);
+    public List<String> getWeathers() {
+        return getAllLatestEvent("prediction.Weather", "weather-provider");
     }
 
-    public List<String> getHotelData() {
-        return getAllLatestEventData("prediction.Hotel", "hotel-provider");
-    }
-
-    private List<String> getLatestEventData(String topic, String ss, int maxEvents) {
-        try {
-            String eventStoreDirectory = getEventStoreDirectory(topic, ss);
-            return readLatestEventsFromFile(eventStoreDirectory, maxEvents);
-        } catch (IOException e) {
-            logger.log(Level.SEVERE, "Error reading latest event data", e);
-        }
-        return Collections.emptyList();
+    public List<String> getHotelOffers() {
+        return getAllLatestEvent("prediction.Hotel", "hotel-provider");
     }
 
     private String getLastestDate(String topic, String ss) throws IOException {
@@ -49,7 +38,7 @@ public class DataLakeAccessor {
         }
     }
 
-    private List<String> getAllLatestEventData(String topic, String ss) {
+    private List<String> getAllLatestEvent(String topic, String ss) {
         try {
             String eventStoreDirectory = getEventStoreDirectory(topic, ss);
             return readAllLatestEventsFromFile(eventStoreDirectory);
@@ -63,12 +52,6 @@ public class DataLakeAccessor {
         String date = getLastestDate(topic, ss);
         String eventStoreDirectory = Paths.get(dataLakeDirectory, "eventstore", topic, ss, date).toString();
         return eventStoreDirectory;
-    }
-
-    private List<String> readLatestEventsFromFile(String filePath, int maxEvents) throws IOException {
-        List<String> allEvents = Files.readAllLines(Paths.get(filePath));
-        int startIndex = Math.max(0, allEvents.size() - maxEvents);
-        return allEvents.subList(startIndex, allEvents.size());
     }
 
     private List<String> readAllLatestEventsFromFile(String filePath) throws IOException {
