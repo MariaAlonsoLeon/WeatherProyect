@@ -7,7 +7,6 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.ulpgc.dacd.model.HotelOffer;
 import org.ulpgc.dacd.model.Location;
-
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -36,7 +35,7 @@ public class XoteloHotelOfferSupplier implements HotelOfferSupplier {
     }
 
     private String buildUrl(String hotelToken, String currentDate) {
-        String tomorrowDate = getTomorrowDate();
+        String tomorrowDate = getCurrentDate();
         return String.format("%s?hotel_key=%s&chk_in=%s&chk_out=%s&currency=EUR", apiUrl, hotelToken, tomorrowDate, currentDate);
     }
 
@@ -46,18 +45,18 @@ public class XoteloHotelOfferSupplier implements HotelOfferSupplier {
             JsonObject jsonObject = JsonParser.parseString(jsonData).getAsJsonObject();
             JsonObject result = jsonObject.getAsJsonObject("result");
             JsonArray rates = result.getAsJsonArray("rates");
-            return rates != null ? createHotelTaxList(rates, location, predictionTime) : new ArrayList<>();
+            return rates != null ? createHotelOfferList(rates, location, predictionTime) : new ArrayList<>();
         } catch (IOException e) {
             handleException("Error fetching or parsing hotel data", e);
             return new ArrayList<>();
         }
     }
 
-    private List<HotelOffer> createHotelTaxList(JsonArray rates, Location location, String predictionTime) {
+    private List<HotelOffer> createHotelOfferList(JsonArray rates, Location location, String predictionTime) {
         List<HotelOffer> hotelOffersList = new ArrayList<>();
         for (int i = 0; i < rates.size(); i++) {
             JsonObject rate = rates.get(i).getAsJsonObject();
-            HotelOffer hotelOffers = createHotel(rate, location, predictionTime);
+            HotelOffer hotelOffers = createHotelOffer(rate, location, predictionTime);
             if (hotelOffers != null) {
                 hotelOffersList.add(hotelOffers);
             }
@@ -65,7 +64,7 @@ public class XoteloHotelOfferSupplier implements HotelOfferSupplier {
         return hotelOffersList;
     }
 
-    private HotelOffer createHotel(JsonObject rate, Location location, String predictionTime) {
+    private HotelOffer createHotelOffer(JsonObject rate, Location location, String predictionTime) {
         try {
             String name = rate.get("name").getAsString();
             float rateValue = rate.get("rate").getAsFloat();
@@ -82,13 +81,15 @@ public class XoteloHotelOfferSupplier implements HotelOfferSupplier {
         return document.text();
     }
 
+    private String getCurrentDate() {
+        LocalDate tomorrow = LocalDate.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        return tomorrow.format(formatter);
+    }
+
     private void handleException(String message, Exception e) {
         logger.log(Level.SEVERE, message, e);
     }
 
-    private String getTomorrowDate() {
-        LocalDate tomorrow = LocalDate.now().plusDays(1);
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        return tomorrow.format(formatter);
-    }
+
 }

@@ -18,12 +18,14 @@ import java.util.logging.Logger;
 public class HotelOfferController {
     private static final Logger logger = Logger.getLogger(HotelOfferController.class.getName());
     private final List<Location> locations;
-    private final HotelOfferSupplier hotelPricesSupplier;
+    private final HotelOfferSupplier hotelOfferSupplier;
     private final HotelOfferStore hotelStore;
+    private final String locationsFilePath;
 
-    public HotelOfferController(HotelOfferSupplier hotelPricesSupplier, HotelOfferStore hotelStore) {
+    public HotelOfferController(HotelOfferSupplier hotelOfferSupplier, HotelOfferStore hotelStore, String locationsFilePath) {
+        this.locationsFilePath = locationsFilePath;
         this.locations = loadLocations();
-        this.hotelPricesSupplier = hotelPricesSupplier;
+        this.hotelOfferSupplier = hotelOfferSupplier;
         this.hotelStore = hotelStore;
     }
 
@@ -43,8 +45,7 @@ public class HotelOfferController {
         List<String> dates = generateDateList();
         try{
             for (Location location : locations) {
-                for (HotelOffer hotelOffer : hotelPricesSupplier.getHotelOffers(location, dates)) {
-                    System.out.println(hotelOffer);
+                for (HotelOffer hotelOffer : hotelOfferSupplier.getHotelOffers(location, dates)) {
                     hotelStore.save(hotelOffer);
                 }
             }
@@ -56,16 +57,16 @@ public class HotelOfferController {
     private List<String> generateDateList() {
         List<String> dateList = new ArrayList<>();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        LocalDate tomorrow = LocalDate.now().plusDays(2);
+        LocalDate currentDate = LocalDate.now().plusDays(1);
 
         for (int i = 0; i < 5; i++) {
-            dateList.add(tomorrow.plusDays(i).format(formatter));
+            dateList.add(currentDate.plusDays(i).format(formatter));
         }
-
+        System.out.println(dateList);
         return dateList;
     }
-    private static List<Location> loadLocations() {
-        List<String> lines = readLinesFromFile("locations.tsv");
+    private List<Location> loadLocations() {
+        List<String> lines = readLinesFromFile(this.locationsFilePath);
         return parseLinesToLocations(lines);
     }
 
@@ -90,7 +91,6 @@ public class HotelOfferController {
                 locations.add(location);
             }
         }
-        System.out.println(locations);
         return locations;
     }
 
@@ -99,10 +99,8 @@ public class HotelOfferController {
         if (parts.length >= 3) {
             String name = parts[0];
             String hotelName = parts[3];
-            double latitude = Double.parseDouble(parts[1]);
-            double longitude = Double.parseDouble(parts[2]);
             String hotelKey = parts[4];
-            return new Location(name, hotelName, latitude, longitude, hotelKey);
+            return new Location(name, hotelName, hotelKey);
         }
         return null;
     }
