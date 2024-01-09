@@ -33,7 +33,11 @@ The program can be easily executed by following these steps:
         *   'weather-provider': Requires the API key as an argument and the path to the file with information about locations (see note below for more information).
           *  You can obtain your API key from this link → [Members (openweathermap.org)](https://openweathermap.org/members)
         *   'hotelOffer-provider': The path to the file with information about locations.
-        *   'weather-responsive-hotel-offer-advisor':
+        *   'weather-responsive-hotel-offer-advisor': You will need the base datalake directory and the base datamart directory.
+    *  **Examples:**
+      * 'weather-provider': `java -jar weather-provider-1.0-SNAPSHOT-jar-with-dependencies.jar your_apiKey path_of_locations_file`.
+      * 'hotel-provider': `java -jar hotel-provider-1.0-SNAPSHOT-jar-with-dependencies.jar path_of_locations_file`.
+      * 'weather-responsive-hotel-offer-advisor': `java -jar weather-responsive-hotel-offer-advisor-1.0-SNAPSHOT-jar-with-dependencies.jar base_dataLake_directory base_datamart_directory`.
 
 Note: The locations file will be a .tsv file with columns:
 
@@ -61,6 +65,8 @@ The application was developed in the IntelliJ environment and uses Maven. It fol
         *   WeatherController: Manages the data to be obtained every 6 hours and ensures it is sent as it arrives. Also loads locations so that OpenWeatherMapSupplier knows which locations to fetch data for.
     *   Main: Similar to other packages, initializes controllers, i.e., the classes mentioned above.
 
+![Weather Provider](WeatherProviderClassDiagram.png)
+
 ### hotel-provider:
 
 *   **Function:** Retrieves hotel offers from Xotelo every day.
@@ -73,12 +79,16 @@ The application was developed in the IntelliJ environment and uses Maven. It fol
         *   JMSHotelStore: Implements the HotelOfferStore interface, equivalent to the JMSWeatherStore class.
         *   HotelController: Analogous to the WeatherController class, but the timer is set every 24 hours.
 
+![Hotel Provider](HotelOfferProviderClassDiagram.png)
+
 ### datalake-builder:
 
 *   **Function:** Builds a DataLake with data received from the 'weather-provider' and 'hotel-provider' brokers.
 *   **Design:** Uses classes such as:
     *   FileEventStoreBuilder: Implements the EventStoreBuilder interface with the save() method and is responsible for saving data from topics in the following directory structure: `datalake/eventstore/{topic}/{ss}/{YYYYMMDD}.events` where the topic is the origin topic of the message, YYYYMMDD is the year-month-day obtained from the event's ts, and ".events" is the file extension in which events associated with a specific day are stored, for example, 20231103.events. Events will be added to the end of the file, with one event per line.
     *   TopicSubscriber: Implements the Subscriber interface and is responsible for creating a durable subscriber to collect data. Calls the save() method of FileEventStore to save the data one by one as it arrives.
+
+![Data lake builder](DataLakeBuilderClassDiagram.png)
 
 ### weather-responsive-hotel-offer-advisor:
 
@@ -103,19 +113,21 @@ The application was developed in the IntelliJ environment and uses Maven. It fol
                 *   Method: GET
                 *   Response: Retrieves meteorological information that meets specified weather type and date parameters.
                 *   Example Response:
-
+    ![/locations example](locationsPhoto.png)
             *   `/offer/:location/:date`
                 *   Method: GET
                 *   Purpose: Retrieve the cheapest hotel offer for a specific location and date.
                 *   Example Response:
-
+    ![/offer/:location/:date example](offerPhoto.png)
             *   `/cheapest-offers`
                 *   Method: GET
                 *   Purpose: Retrieve the cheapest hotel offers based on the specified weather type and date. It provides information on how much you should pay per night for that specific date.
                 *   Example Response:
-
+    ![/cheapest-offers example](CompletedOffers.png)
                     Note: The cost is in euros, and weather parameters are in the international system. CompanyName indicates the company offering that cost, and rain indicates the probability of rain.
     *   ViewModel: These can be seen as the API schemas; some of them are composed of others. Here we have classes like HotelOffer, WeatherOffer. The ones that will be shown in the API implements Output interface, which is a tagger interface to represent the classes that can be an output for the API.
+![Weather responsive hotel offer](BusinessUnitClassDiagram.png)
+
 * * *
 
 Considerations:
