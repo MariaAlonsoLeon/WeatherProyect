@@ -8,7 +8,11 @@
 
 # Main Functionality
 
-The Weather application provides weather forecasts by integrating with the OpenWeatherMap API. It consists of two main modules: "weather-provider" and "event-store-builder." The first module collects the weather forecast every 6 hours for the next 5 days for the 8 Canary Islands and sends it to an active messaging system or broker (ActiveMQ). The second module, "event-store-builder," subscribes to weather events from the messaging system and stores them in local files, using the following directory structure: "eventstore/prediction.Weather/{ss}/{YYYYMMDD}.events." Here, ss is the data source, "YYYYMMDD" is the date of the event, and ".event" is the file extension for storing events associated with a specific day.
+This project comprises 4 modules. Users can interact with the application through a REST API that defines three routes, explained later. Specifically, the REST API aims to exploit data on hotel offers and weather forecasts.
+
+The application allows users to select holiday destinations based on 5 types of weather (COLD, WARM, RAINY, SNOWY, and CLEAR). Each weather type has assigned locations based on meteorological variables obtained from OpenWeatherMap for the next 5 days at noon. Additionally, hotel offers obtained from Xotelo are integrated, allowing users to find the cheapest offer for a given weather type or location. In the case of Xotelo, data is collected from tomorrow onwards (as the platform does not allow the check-in and check-out dates to be the same) up to 5 days in advance. This approach accommodates potential failures in Xotelo, providing more chances to obtain the required data.
+
+Meteorological data is updated every 6 hours, and hotel offers are collected daily.
 
 # Resources Used
 - **Development Environment:** IntelliJ IDEA.
@@ -18,74 +22,124 @@ The Weather application provides weather forecasts by integrating with the OpenW
 
 The program can be easily executed by following these steps:
 
-1. Download the latest version from the releases of this project. These already include all the necessary dependencies.
-2. Unzip the downloaded folders and place them in the desired location.
-3. Start the broker. To do this, you will need to download it from this link → [ActiveMQ (apache.org)](https://activemq.apache.org/)
-4. Run the 'event-store-builder' module. To do this, from the terminal, use 'cd' to navigate to the directory where the uncompressed folders are located. Use the 'java --jar' command and add the path where you want to store the directory structure as a program argument.
-5. Now, do the same with the 'weather-provider' module.
-6. In this case, the program argument will be the API key. Obtain your key from this link → [Members (openweathermap.org)](https://openweathermap.org/members)
+1.  Download the latest version of the project from the Releases of the project.
+2.  Unzip the folders and place them in the desired location.
+3.  Start the ActiveMQ broker from [ActiveMQ (apache.org)](https://activemq.apache.org/).
+4.  Run the 'event-store-builder' module; you'll need to specify the directory where you want to store the data lake.
+    *   **Requirements:** Pass the base path and topic names as arguments.
+    *   Use the command `java -jar event-store-builder-1.0-SNAPSHOT-jar-with-dependencies.jar your_directory`.
+5.  Repeat the above step for the 'weather-responsive-hotel-offer-advisor,' 'weather-provider,' and 'hotelOffer-provider' modules. Here's an example; remember to replace the program argument values with your desired ones.
+    *   **Requirements:**
+        *   'weather-provider': Requires the API key as an argument and the path to the file with information about locations (see note below for more information).
+          *  You can obtain your API key from this link → [Members (openweathermap.org)](https://openweathermap.org/members)
+        *   'hotelOffer-provider': The path to the file with information about locations.
+        *   'weather-responsive-hotel-offer-advisor':
 
+Note: The locations file will be a .tsv file with columns:
 
+*   Location name (e.g., a city or town)
+*   Latitude
+*   Longitude
+*   Hotel name
+*   Hotel key: the key associated with each hotel on TripAdvisor (get yours [here](https://xotelo.com/how-to-get-hotel-key.html))
 
+Implementation:
+---------------
 
-# Implementation
+The application was developed in the IntelliJ environment and uses Maven. It follows a publisher-subscriber architecture with the following modules:
 
-## Module "weather-provider"
+### weather-provider:
 
-### Control:
+*   **Function:** Retrieves weather forecasts every 6 hours from OpenWeatherMap.
+*   **Design:** Uses the MVC pattern:
+    *   Model:
+        *   Weather: includes meteorological information such as temperature, humidity, rain probability, etc., along with the time it was saved (ts), forecast time (predictionTime), and an identifier of the topic that sent it (ss).
+        *   Location
+    *   Control:
+        *   OpenWeatherMapSupplier: Implements the WeatherSupplier interface, retrieves data from OpenWeatherMap.
+        *   JMSWeatherStore: Implements the WeatherStore interface, responsible for sending data in JSON format to the ActiveMQ broker.
+        *   WeatherController: Manages the data to be obtained every 6 hours and ensures it is sent as it arrives. Also loads locations so that OpenWeatherMapSupplier knows which locations to fetch data for.
+    *   Main: Similar to other packages, initializes controllers, i.e., the classes mentioned above.
 
-- **ActiveMQMessageSender (implements TopicSender):** Sends weather data to the broker.
-- **OpenWeatherMapSupplier (implements WeatherSupplier):** Obtains weather forecasts from OpenWeatherMap.
-- **WeatherController:** Controls the periodic retrieval and sending of weather data.
-- **Main:** Initiates the weather forecast application.
+### hotel-provider:
 
-### Model:
+*   **Function:** Retrieves hotel offers from Xotelo every day.
+*   **Design:** Similar to 'weather-provider':
+    *   Model:
+        *   HotelOffer: Equivalent to the Weather class but for hotel offer information. It's important to note that the price is obtained by adding the tax to the base price.
+        *   Location: In this case, it includes an attribute hotelKey corresponding to the hotel's key on TripAdvisor, which you can get on this [website](https://xotelo.com/how-to-get-hotel-key.html).
+    *   Control:
+        *   XoteloHotelSupplier: Implements the HotelOfferSupplier interface, retrieves data from Xotelo for different hotels.
+        *   JMSHotelStore: Implements the HotelOfferStore interface, equivalent to the JMSWeatherStore class.
+        *   HotelController: Analogous to the WeatherController class, but the timer is set every 24 hours.
 
-- **Location:** Represents a geographical location.
-- **Weather:** Represents meteorological data events.
+### datalake-builder:
 
-## Module "event-store-builder"
+*   **Function:** Builds a DataLake with data received from the 'weather-provider' and 'hotel-provider' brokers.
+*   **Design:** Uses classes such as:
+    *   FileEventStoreBuilder: Implements the EventStoreBuilder interface with the save() method and is responsible for saving data from topics in the following directory structure: `datalake/eventstore/{topic}/{ss}/{YYYYMMDD}.events` where the topic is the origin topic of the message, YYYYMMDD is the year-month-day obtained from the event's ts, and ".events" is the file extension in which events associated with a specific day are stored, for example, 20231103.events. Events will be added to the end of the file, with one event per line.
+    *   TopicSubscriber: Implements the Subscriber interface and is responsible for creating a durable subscriber to collect data. Calls the save() method of FileEventStore to save the data one by one as it arrives.
 
-- **FileEventStoreBuilder (implements EventStoreBuilder):** Stores weather events in local files.
-- **TopicSubscriber (implements Subscriber):** Subscribes to weather events and stores them locally.
-- **Main:** Initiates the weather event subscription system.
+### weather-responsive-hotel-offer-advisor:
 
-## Design and Principles
+*   **Function:** Implements business rules and creates a data mart based on an SQLite database.
+*   **Design:** Follows the MVC pattern:
+    *   Model:
+        *   HotelOfferRecord: Represents one of the columns of the Hotels table in the database.
+        *   WeatherRecord: Equivalent to HotelOfferRecord but for weather-related information.
+        *   WeatherType: An enumeration that classifies weather into different types (COLD, WARM, RAINY, SNOWY, and CLEAR).
+    *   Control:
 
-The application adheres to SOLID principles to ensure a robust and maintainable design. Below are specific SOLID principles applied in the implementation:
+        *   Exceptions: Some custom exceptions are defined to prevent improperly handled exceptions.
+        *   Commands: Creates a Command factory representing requests to the database to fulfill API queries. So, for each class implementing the Command interface, it will be a data query.
+        *   Handlers: Also creates a Handlers factory, in this case, two, one for Weather and another for HotelOffer, where data is processed to build the model and save it in the database. Each Handler has an attribute SqLiteDataMartStore, so it will call the saveWeather() or saveHotel() method of this class.
+        *   TopicSubscriber: Very similar to the TopicSubscriber of the datalake-builder module, but in this case, depending on the topic, it calls the handleEvent() method of a specific Handler to process and save the data where appropriate.
+        *   SqLiteDataMartStore: Implements the DataMartStore interface and is responsible for creating the database and tables if they do not exist and saving the data. Additionally, it has a method to delete the database.
+        *   Main: Initializes the controllers and cleans the database at the beginning of execution.
+    *   View:
 
-### Single Responsibility Principle (SRP):
+        *   HotelRecommendationAPI: This class uses Spark to define a REST API where the following routes are defined:
+            *   `/locations`
+                *   Method: GET
+                *   Response: Retrieves meteorological information that meets specified weather type and date parameters.
+                *   Example Response:
 
-Ensures that each class has a single responsibility. For example, the FileEventStoreBuilder class has the exclusive responsibility of saving weather events to local files. This way, if the storage process needs modification, only this class will be affected.
+            *   `/offer/:location/:date`
+                *   Method: GET
+                *   Purpose: Retrieve the cheapest hotel offer for a specific location and date.
+                *   Example Response:
 
-### Open/Closed Principle (OCP):
+            *   `/cheapest-offers`
+                *   Method: GET
+                *   Purpose: Retrieve the cheapest hotel offers based on the specified weather type and date. It provides information on how much you should pay per night for that specific date.
+                *   Example Response:
 
-Indicates that existing code should only be modified to fix errors and not to add new functionalities. For instance, the weather provider interface allows introducing new information providers without modifying the WeatherController logic.
+                    Note: The cost is in euros, and weather parameters are in the international system. CompanyName indicates the company offering that cost, and rain indicates the probability of rain.
+    *   ViewModel: These can be seen as the API schemas; some of them are composed of others. Here we have classes like HotelOffer, WeatherOffer. The ones that will be shown in the API implements Output interface, which is a tagger interface to represent the classes that can be an output for the API.
+* * *
 
-### Liskov Substitution Principle (LSP):
+Considerations:
+---------------
 
-Subclasses should be substitutable for their base classes without affecting functionality. For example, the OpenWeatherMapSupplier class is entirely substitutable for its base class WeatherSupplier, ensuring that any part of the system using WeatherSupplier works correctly with OpenWeatherMapSupplier.
+* * *
 
-### Interface Segregation Principle (ISP):
+### SOLID Principles:
 
-Interfaces should be designed without unnecessary methods, keeping them clean. Large interfaces should be divided into smaller ones. For example, the WeatherSupplier interface offers only the necessary functionality to obtain weather forecasts.
+The application adheres to SOLID principles to ensure a robust and maintainable design.
 
-### Dependency Inversion Principle (DIP):
+*   **Single Responsibility Principle (SRP):**
+    *   Example: The `FileEventStoreBuilder` class has the exclusive responsibility of saving meteorological events in local files.
+*   **Open/Closed Principle (OCP):**
+    *   Example: The weather provider interface allows adding new providers without modifying the logic in `WeatherController`.
+*   **Liskov Substitution Principle (LSP):**
+    *   Example: `OpenWeatherMapSupplier` is entirely substitutable for its base class `WeatherSupplier`.
+*   **Interface Segregation Principle (ISP):**
+    *   Example: The `WeatherSupplier` interface offers only functionalities necessary for obtaining weather forecasts.
+*   **Dependency Inversion Principle (DIP):**
+    *   Example: `WeatherController` depends on the `WeatherSupplier` and `WeatherStore` interfaces instead of their implementations. Additionally, it utilizes the Factory Method in the weather-responsive-hotel-offer-advisor module.
 
-Dependencies are separated to avoid depending on low-level modules. Instead, both should depend on abstractions. For example, the WeatherController class depends on the WeatherSupplier and WeatherStore interfaces rather than their implementations.
+### Other Highlights:
 
-### Observer Pattern:
-
-The Observer pattern is used to notify subscribers, in this case, the "event-store-builder" module, about new weather events. This decouples event generation and storage.
-
-### Exception Handling:
-
-A consistent exception-handling system is implemented. In the "event-store-builder" module, custom exceptions like WeatherReceiverException are used to encapsulate specific errors for proper handling. No interface throws exceptions that are not custom, especially Runtime Exceptions.
-
-### Logger Usage:
-
-The use of a logger throughout the code improves visibility and exception handling. Exceptions are appropriately logged, aiding debugging and system monitoring in production.
-
-### Data Lake:
-
-The "event-store-builder" module stores weather events in a local file format organized as a "Data Lake." This approach allows for easy expansion and long-term data analysis.
+*   The Observer pattern is used for event notification to subscribers.
+*   A consistent system for exception handling and logging (Logger) is implemented.
+*   A Data Lake approach is used for local storage of meteorological events.
