@@ -28,7 +28,6 @@ public class XoteloHotelOfferSupplier implements HotelOfferSupplier {
         List<HotelOffer> hotelOffersList = new ArrayList<>();
         for (String currentDate : dates) {
             String url = buildUrl(location.hotelKey(), currentDate);
-            System.out.println(url);
             hotelOffersList.addAll(parseHotelOffers(url, location, currentDate));
         }
         return hotelOffersList;

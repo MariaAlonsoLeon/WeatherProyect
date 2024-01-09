@@ -9,8 +9,8 @@
     <packaging>pom</packaging>
     <modules>
         <module>weather-provider</module>
-        <module>event-store-builder</module>
-        <module>bussiness</module>
+        <module>datalake-builder</module>
+        <module>weather-responsive-hotel-offer-advisor</module>
         <module>hotel-provider</module>
     </modules>
     <properties>

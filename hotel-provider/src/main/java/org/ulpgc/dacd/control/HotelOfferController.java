@@ -62,7 +62,6 @@ public class HotelOfferController {
         for (int i = 0; i < 5; i++) {
             dateList.add(currentDate.plusDays(i).format(formatter));
         }
-        System.out.println(dateList);
         return dateList;
     }
     private List<Location> loadLocations() {
