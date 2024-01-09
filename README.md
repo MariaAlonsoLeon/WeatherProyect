@@ -25,9 +25,9 @@ The program can be easily executed by following these steps:
 1.  Download the latest version of the project from the Releases of the project.
 2.  Unzip the folders and place them in the desired location.
 3.  Start the ActiveMQ broker from [ActiveMQ (apache.org)](https://activemq.apache.org/).
-4.  Run the 'event-store-builder' module; you'll need to specify the directory where you want to store the data lake.
+4.  Run the 'datalake-builder' module; you'll need to specify the directory where you want to store the data lake and the names of the topics (prediction.Weather y prediction.Hotel).
     *   **Requirements:** Pass the base path and topic names as arguments.
-    *   Use the command `java -jar event-store-builder-1.0-SNAPSHOT-jar-with-dependencies.jar your_directory`.
+    *   Use the command `java -jar event-store-builder-1.0-SNAPSHOT-jar-with-dependencies.jar your_directory topic`.
 5.  Repeat the above step for the 'weather-responsive-hotel-offer-advisor,' 'weather-provider,' and 'hotelOffer-provider' modules. Here's an example; remember to replace the program argument values with your desired ones.
     *   **Requirements:**
         *   'weather-provider': Requires the API key as an argument and the path to the file with information about locations (see note below for more information).
@@ -63,7 +63,7 @@ The application was developed in the IntelliJ environment and uses Maven. It fol
         *   OpenWeatherMapSupplier: Implements the WeatherSupplier interface, retrieves data from OpenWeatherMap.
         *   JMSWeatherStore: Implements the WeatherStore interface, responsible for sending data in JSON format to the ActiveMQ broker.
         *   WeatherController: Manages the data to be obtained every 6 hours and ensures it is sent as it arrives. Also loads locations so that OpenWeatherMapSupplier knows which locations to fetch data for.
-    *   Main: Similar to other packages, initializes controllers, i.e., the classes mentioned above.
+    *   Main: Similar to other packages, initializes controllers, i.e., the classes mentioned above. In the rest of the modules do the same.
 
 ![Weather Provider](WeatherProviderClassDiagram.png)
 
@@ -78,6 +78,7 @@ The application was developed in the IntelliJ environment and uses Maven. It fol
         *   XoteloHotelSupplier: Implements the HotelOfferSupplier interface, retrieves data from Xotelo for different hotels.
         *   JMSHotelStore: Implements the HotelOfferStore interface, equivalent to the JMSWeatherStore class.
         *   HotelController: Analogous to the WeatherController class, but the timer is set every 24 hours.
+        *   Main: initializes controllers.
 
 ![Hotel Provider](HotelOfferProviderClassDiagram.png)
 
@@ -87,6 +88,7 @@ The application was developed in the IntelliJ environment and uses Maven. It fol
 *   **Design:** Uses classes such as:
     *   FileEventStoreBuilder: Implements the EventStoreBuilder interface with the save() method and is responsible for saving data from topics in the following directory structure: `datalake/eventstore/{topic}/{ss}/{YYYYMMDD}.events` where the topic is the origin topic of the message, YYYYMMDD is the year-month-day obtained from the event's ts, and ".events" is the file extension in which events associated with a specific day are stored, for example, 20231103.events. Events will be added to the end of the file, with one event per line.
     *   TopicSubscriber: Implements the Subscriber interface and is responsible for creating a durable subscriber to collect data. Calls the save() method of FileEventStore to save the data one by one as it arrives.
+    *   Main: initializes controllers.
 
 ![Data lake builder](DataLakeBuilderClassDiagram.png)
 
