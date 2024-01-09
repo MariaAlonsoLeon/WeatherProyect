@@ -17,14 +17,10 @@ public class Main {
             logger.severe("Insufficient arguments. Usage: Main <baseDirectory> <topic1> <topic2> ...");
             return;
         }
-
         String baseDirectory = args[0];
-
         List<String> topicNames = Arrays.asList(Arrays.copyOfRange(args, 1, args.length));
-
         EventStoreBuilder eventStoreBuilder = new FileEventStoreBuilder(baseDirectory);
-        Subscriber subscriber = new TopicSubscriber("tcp://localhost:61616", topicNames, "EventStoreBuilder", eventStoreBuilder);
-
+        Subscriber subscriber = new TopicSubscriber("tcp://localhost:61616", topicNames, "DataLakeStoreBuilder", eventStoreBuilder);
         ExecutorService executorService = Executors.newSingleThreadExecutor();
         executorService.submit(() -> {
             try {
@@ -33,7 +29,6 @@ public class Main {
                 logger.log(Level.SEVERE, "Error starting TopicSubscriber", e);
             }
         });
-
         executorService.shutdown();
     }
 }
