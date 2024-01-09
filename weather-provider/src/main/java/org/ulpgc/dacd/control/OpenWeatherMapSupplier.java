@@ -28,7 +28,7 @@ public class OpenWeatherMapSupplier implements WeatherSupplier {
     @Override
     public List<Weather> getWeathers(Location location) {
         String url = buildUrl(location);
-        return parseWeatherData(url, location);
+        return parseWeather(url, location);
     }
 
     private String buildUrl(Location location) {
@@ -36,23 +36,23 @@ public class OpenWeatherMapSupplier implements WeatherSupplier {
         return String.format("%s%s&appid=%s&units=metric", templateUrl, coordinates, apiKey);
     }
 
-    private List<Weather> parseWeatherData(String url, Location location) {
+    private List<Weather> parseWeather(String url, Location location) {
         try {
             String jsonWeather = getWeatherFromUrl(url);
             JsonObject jsonObject = JsonParser.parseString(jsonWeather).getAsJsonObject();
             JsonArray list = jsonObject.getAsJsonArray("list");
-            return list != null ? findMatchingWeatherItems(list, location) : new ArrayList<>();
+            return list != null ? findMatchingWeathers(list, location) : new ArrayList<>();
         } catch (IOException e) {
             handleException("Error fetching or parsing weather data", e);
             return new ArrayList<>();
         }
     }
 
-    private List<Weather> findMatchingWeatherItems(JsonArray list, Location location) {
+    private List<Weather> findMatchingWeathers(JsonArray list, Location location) {
         List<Weather> matchingWeatherItems = new ArrayList<>();
         for (JsonElement element : list) {
             if (element.isJsonObject() && isWeatherAt12(element.getAsJsonObject())) {
-                Weather weather = createWeatherFromForecastData(element.getAsJsonObject(), location);
+                Weather weather = createWeatherFromForecast(element.getAsJsonObject(), location);
                 if (weather != null) {
                     matchingWeatherItems.add(weather);
                 }
@@ -66,7 +66,7 @@ public class OpenWeatherMapSupplier implements WeatherSupplier {
         return hour.equals("12:00:00");
     }
 
-    private Weather createWeatherFromForecastData(JsonObject forecastData, Location location) {
+    private Weather createWeatherFromForecast(JsonObject forecastData, Location location) {
         try {
             Instant instant = Instant.ofEpochSecond(forecastData.get("dt").getAsLong());
             int humidity = forecastData.getAsJsonObject("main").get("humidity").getAsInt();

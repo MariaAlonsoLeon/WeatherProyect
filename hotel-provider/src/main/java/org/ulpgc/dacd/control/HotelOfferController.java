@@ -1,12 +1,13 @@
 package org.ulpgc.dacd.control;
 
 import org.ulpgc.dacd.control.exceptions.StoreException;
+import org.ulpgc.dacd.model.HotelOffer;
 import org.ulpgc.dacd.model.Location;
-import org.ulpgc.dacd.model.Weather;
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
@@ -14,18 +15,18 @@ import java.util.TimerTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class WeatherController {
-    private static final Logger logger = Logger.getLogger(WeatherController.class.getName());
+public class HotelOfferController {
+    private static final Logger logger = Logger.getLogger(HotelOfferController.class.getName());
     private final List<Location> locations;
-    private final WeatherSupplier weatherSupplier;
-    private final WeatherStore weatherStore;
+    private final HotelOfferSupplier hotelOfferSupplier;
+    private final HotelOfferStore hotelStore;
     private final String locationsFilePath;
 
-    public WeatherController(WeatherSupplier weatherSupplier, WeatherStore weatherStore, String locationsFilePath) {
-        this.weatherSupplier = weatherSupplier;
-        this.weatherStore = weatherStore;
+    public HotelOfferController(HotelOfferSupplier hotelOfferSupplier, HotelOfferStore hotelStore, String locationsFilePath) {
         this.locationsFilePath = locationsFilePath;
         this.locations = loadLocations();
+        this.hotelOfferSupplier = hotelOfferSupplier;
+        this.hotelStore = hotelStore;
     }
 
     public void execute() {
@@ -33,18 +34,19 @@ public class WeatherController {
         TimerTask task = new TimerTask() {
             @Override
             public void run() {
-                fetchAndStoreWeather();
-                logger.info("Weather data update completed.");
+                fetchAndStoreHotelPrices();
+                logger.info("Hotel offers update completed.");
             }
         };
-        timer.schedule(task, 0, 6 * 60 * 60 * 1000);
+        timer.schedule(task, 0, 24 * 60 * 60 * 1000);
     }
 
-    private void fetchAndStoreWeather() {
+    private void fetchAndStoreHotelPrices() {
+        List<String> dates = generateDateList();
         try{
             for (Location location : locations) {
-                for (Weather weather : weatherSupplier.getWeathers(location)) {
-                    weatherStore.save(weather);
+                for (HotelOffer hotelOffer : hotelOfferSupplier.getHotelOffers(location, dates)) {
+                    hotelStore.save(hotelOffer);
                 }
             }
         } catch (StoreException e){
@@ -52,6 +54,16 @@ public class WeatherController {
         }
     }
 
+    private List<String> generateDateList() {
+        List<String> dateList = new ArrayList<>();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        LocalDate currentDate = LocalDate.now().plusDays(1);
+
+        for (int i = 0; i < 5; i++) {
+            dateList.add(currentDate.plusDays(i).format(formatter));
+        }
+        return dateList;
+    }
     private List<Location> loadLocations() {
         List<String> lines = readLinesFromFile(this.locationsFilePath);
         return parseLinesToLocations(lines);
@@ -74,7 +86,7 @@ public class WeatherController {
         List<Location> locations = new ArrayList<>();
         for (String line : lines) {
             Location location = parseLineToLocation(line);
-            if (location != null && !locations.contains(location)) {
+            if (location != null) {
                 locations.add(location);
             }
         }
@@ -85,19 +97,11 @@ public class WeatherController {
         String[] parts = line.split("\t");
         if (parts.length >= 3) {
             String name = parts[0];
-            double latitude = parseDouble(parts[1]);
-            double longitude = parseDouble(parts[2]);
-            return new Location(name, latitude, longitude);
+            String hotelName = parts[3];
+            String hotelKey = parts[4];
+            return new Location(name, hotelName, hotelKey);
         }
         return null;
     }
-
-    private static double parseDouble(String value) {
-        try {
-            return Double.parseDouble(value);
-        } catch (NumberFormatException e) {
-            e.printStackTrace();
-            return 0.0;
-        }
-    }
 }
+

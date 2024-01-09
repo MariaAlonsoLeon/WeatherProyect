@@ -8,7 +8,9 @@
         <artifactId>WeatherDACDProyect</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
-    <artifactId>weather-provider</artifactId>
+
+    <artifactId>hotel-provider</artifactId>
+
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
